@@ -39,7 +39,7 @@
         ];
 
 
-        var NUM_OF_DOTS = 20;
+        var NUM_OF_DOTS = 100;
         var FRAMERATE = 20;
         var SPEED = 5;
 
@@ -58,17 +58,15 @@
         var ctx;
         var canvas;
         var showGrid = false;
-        var dotRadius = 7;
+        var dotRadius = 5;
         var g = 50; // 50
         var numOfRows = 14;
         var numOfColumns = 32;
         var gw = numOfColumns * g; // 1600
         var gh = numOfRows *g; // 700
 
-        function random(max) {
-            // Add min value to consider dot radius
-            // if value is 0 dot will be out of the canvas
-            return Math.floor(Math.random() * Math.floor(max));
+        function random(min, max) {
+            return Math.floor(Math.random() * (max - min)) + min;
         }
 
         function Dot(startX, startY) {
@@ -81,11 +79,9 @@
 
 
         function generateDots() {
-            var smart_dots = [];
-            for (var i = 0; i < NUM_OF_DOTS; i++) {
-                var dot = new Dot(random(200), random(200));
-                smart_dots.push(dot);
-            }
+            var smart_dots = new Array(NUM_OF_DOTS).fill(null).map(function() {
+                return new Dot(random(30, 200), random(30, 200));
+            });
 
             return smart_dots;
         }
@@ -171,13 +167,12 @@
         function willColide(posX, posY) {
             var r = dotRadius;
 
-            // Refactor - exit loop after first element found
-            var colidesWith = obstacles.filter(function(ob) {
+            var colidesWith = obstacles.find(function(ob) {
                 return (posX + r >= ob.x && posX - r <= (ob.x + ob.w)
                     && posY + r >= ob.y && posY - r <= (ob.y + ob.h));
             });
 
-            return colidesWith.length > 0;
+            return colidesWith ? true : false;
         }
 
         window.onkeypress = function(e) {
