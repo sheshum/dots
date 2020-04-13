@@ -66,6 +66,8 @@
         var gh = numOfRows *g; // 700
 
         function random(max) {
+            // Add min value to consider dot radius
+            // if value is 0 dot will be out of the canvas
             return Math.floor(Math.random() * Math.floor(max));
         }
 
@@ -156,9 +158,9 @@
         }
 
         function isEdge(posX, posY) {
-            var r = dotRadius / 2;
-            if (posX - r > 0 && posX + r < canvas.width) {
-                if (posY - r > 0 && posY + r < canvas.height) {
+            var r = dotRadius;
+            if (posX - r >= 0 && posX + r <= canvas.width) {
+                if (posY - r >= 0 && posY + r <= canvas.height) {
                     return false;
                 }
             }
