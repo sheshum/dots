@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Smart Dots</title>
+</head>
+<style>
+    html, body {
+        width:  100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #282a2c;
+    }
+
+    canvas {
+        /* position: absolute;
+        width: 100%;
+        height: 100%; */
+        border: 1px solid gray;
+        background-color: #282a2c;
+    }
+</style>
+<body>
+
+    <canvas id="mycanvas">
+        Canvas not supported
+    </canvas>
+    
+
+    <script>
+        var obstacles = [
+            { x: 200, y: 200, w: 50, h: 300 },
+            { x: 400, y: 0, w: 100, h: 250 },
+            { x: 600, y: 450 , w: 150, h: 200 },
+            { x: 1000, y: 300, w: 400, h: 150 }
+        ];
+
+
+        var NUM_OF_DOTS = 20;
+        var FRAMERATE = 20;
+        var SPEED = 5;
+
+        var DIR_TYPES = ["N", "NE", "E", "ES", "S", "SW", "W", "NW"];
+        var directions = {
+            "N": { speedX: 0, speedY: -SPEED },
+            "NE": { speedX: SPEED, speedY: -SPEED },
+            "E": { speedX: SPEED, speedY: 0 },
+            "ES": { speedX: SPEED, speedY: SPEED },
+            "S": { speedX: 0, speedY: SPEED },
+            "SW": { speedX: -SPEED, speedY: SPEED },
+            "W": { speedX: -SPEED, speedY: 0 },
+            "NW": { speedX: -SPEED, speedY: -SPEED }
+        };
+
+        var ctx;
+        var canvas;
+        var showGrid = false;
+        var dotRadius = 7;
+        var g = 50; // 50
+        var numOfRows = 14;
+        var numOfColumns = 32;
+        var gw = numOfColumns * g; // 1600
+        var gh = numOfRows *g; // 700
+
+        function random(max) {
+            return Math.floor(Math.random() * Math.floor(max));
+        }
+
+        function Dot(startX, startY) {
+            this.x = startX;
+            this.y = startY;
+            this.move = moveDot;
+            this.draw = drawDot;
+            this.counter = 0;
+        }
+
+
+        function generateDots() {
+            var smart_dots = [];
+            for (var i = 0; i < NUM_OF_DOTS; i++) {
+                var dot = new Dot(random(200), random(200));
+                smart_dots.push(dot);
+            }
+
+            return smart_dots;
+        }
+        function drawGrid() {
+            ctx.strokeStyle = "gray";
+            // ctx.lineWitdh = 1;
+
+            // Horizontal lines
+            for (var i = 0; i < numOfRows; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, g * i);
+                ctx.lineTo(gw, g * i);
+                ctx.stroke();
+            }
+
+            // Vertical lines
+            for (var j = 1; j < numOfColumns; j++) {
+                ctx.beginPath();
+                ctx.moveTo(g * j, 0);
+                ctx.lineTo(g * j, gh);
+                ctx.stroke();
+            }
+        }
+
+        function drawObstacles() {
+            ctx.fillStyle = "white";
+            obstacles.forEach(function(ob) {
+                ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+            });
+        }
+
+        function drawDot() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, dotRadius, 0, 2*Math.PI);
+            ctx.fillStyle = "red";
+            ctx.fill();
+        }
+
+        function clear() {
+            ctx.clearRect(0, 0, gw, gh);
+        }
+
+        function getRandomDirection() {
+            var rnd = Math.floor(Math.random() * Math.floor(7));
+            return DIR_TYPES[rnd];
+        }
+
+        function moveDot() {
+            if (!this.direction) {
+                var dirType = getRandomDirection();
+                this.direction = directions[dirType];
+            }
+
+            // Change direction every 10 steps
+            if (this.counter === 10) {
+                this.counter = 0;
+                var dirType = getRandomDirection();
+                this.direction = directions[dirType];
+            }
+
+            var newPosX = this.x + this.direction.speedX;
+            var newPosY = this.y + this.direction.speedY;
+
+            if (!willColide(newPosX, newPosY) && !isEdge(newPosX, newPosY)) {
+                this.x = newPosX;
+                this.y = newPosY;
+            }
+
+            this.counter++;
+        }
+
+        function isEdge(posX, posY) {
+            var r = dotRadius / 2;
+            if (posX - r > 0 && posX + r < canvas.width) {
+                if (posY - r > 0 && posY + r < canvas.height) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function willColide(posX, posY) {
+            var r = dotRadius;
+
+            // Refactor - exit loop after first element found
+            var colidesWith = obstacles.filter(function(ob) {
+                return (posX + r >= ob.x && posX - r <= (ob.x + ob.w)
+                    && posY + r >= ob.y && posY - r <= (ob.y + ob.h));
+            });
+
+            return colidesWith.length > 0;
+        }
+
+        window.onkeypress = function(e) {
+            if (e.keyCode === 103) {
+                showGrid = !showGrid;
+            }
+        }
+
+        window.onload = function() {
+            canvas = document.getElementById("mycanvas");
+            ctx = canvas.getContext("2d");
+            canvas.width = gw;
+            canvas.height = gh;
+
+            var generation = generateDots();
+
+            setInterval(function() {
+                clear();
+                if (showGrid) {
+                    drawGrid();
+                }
+                drawObstacles();
+
+                generation.forEach(function(dot) {
+                    dot.move();
+                    dot.draw();
+                });
+            }, FRAMERATE);
+        }
+    </script>
+</body>
+</html>
