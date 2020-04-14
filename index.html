@@ -41,25 +41,33 @@
 
         var NUM_OF_DOTS = 100;
         var FRAMERATE = 20;
-        var SPEED = 5;
+        var VELOCITY = 5;
 
         var DIR_TYPES = ["N", "NE", "E", "ES", "S", "SW", "W", "NW"];
         var directions = {
-            "N": { speedX: 0, speedY: -SPEED },
-            "NE": { speedX: SPEED, speedY: -SPEED },
-            "E": { speedX: SPEED, speedY: 0 },
-            "ES": { speedX: SPEED, speedY: SPEED },
-            "S": { speedX: 0, speedY: SPEED },
-            "SW": { speedX: -SPEED, speedY: SPEED },
-            "W": { speedX: -SPEED, speedY: 0 },
-            "NW": { speedX: -SPEED, speedY: -SPEED }
+            "N": { speedX: 0, speedY: -VELOCITY },
+            "NE": { speedX: VELOCITY, speedY: -VELOCITY },
+            "E": { speedX: VELOCITY, speedY: 0 },
+            "ES": { speedX: VELOCITY, speedY: VELOCITY },
+            "S": { speedX: 0, speedY: VELOCITY },
+            "SW": { speedX: -VELOCITY, speedY: VELOCITY },
+            "W": { speedX: -VELOCITY, speedY: 0 },
+            "NW": { speedX: -VELOCITY, speedY: -VELOCITY }
+        };
+
+        var KEY_CODES = {
+            G: 103,
+            Space: 32
         };
 
         var ctx;
         var canvas;
-        var showGrid = false;
+        
         var dotRadius = 5;
-        var g = 50; // 50
+        var showGrid = true;
+
+
+        var g = 50;
         var numOfRows = 14;
         var numOfColumns = 32;
         var gw = numOfColumns * g; // 1600
@@ -69,42 +77,83 @@
             return Math.floor(Math.random() * (max - min)) + min;
         }
 
-        function Dot(startX, startY) {
-            this.x = startX;
-            this.y = startY;
-            this.move = moveDot;
-            this.draw = drawDot;
-            this.counter = 0;
-        }
-
-
         function generateDots() {
             var smart_dots = new Array(NUM_OF_DOTS).fill(null).map(function() {
-                return new Dot(random(30, 200), random(30, 200));
+                return new Dot(random(30, 180), random(30, 180));
             });
 
             return smart_dots;
         }
-        function drawGrid() {
-            ctx.strokeStyle = "gray";
-            // ctx.lineWitdh = 1;
 
-            // Horizontal lines
-            for (var i = 0; i < numOfRows; i++) {
-                ctx.beginPath();
-                ctx.moveTo(0, g * i);
-                ctx.lineTo(gw, g * i);
-                ctx.stroke();
-            }
+        function Grid(g, numOfRows, numOfColumns, gw, gh) {
+            this.g = g;
+            this.numOfRows = numOfRows;
+            this.numOfColumns = numOfColumns;
+            this.gw = this.numOfColumns * this.g;
+            this.gh = this.numOfRows * this.g;
 
-            // Vertical lines
-            for (var j = 1; j < numOfColumns; j++) {
-                ctx.beginPath();
-                ctx.moveTo(g * j, 0);
-                ctx.lineTo(g * j, gh);
-                ctx.stroke();
+            this.draw = function() {
+                ctx.strokeStyle = "gray";
+                ctx.lineWidth = 0.5;
+
+                // Horizontal lines
+                for (var i = 0; i < this.numOfRows; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, this.g * i);
+                    ctx.lineTo(this.gw, this.g * i);
+                    ctx.stroke();
+                }
+
+                // Vertical lines
+                for (var j = 1; j < this.numOfColumns; j++) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.g * j, 0);
+                    ctx.lineTo(this.g * j, this.gh);
+                    ctx.stroke();
+                }
             }
         }
+
+        function Vector2D(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        function Dot(startX, startY, vector) {
+            this.vector = new Vector2D(startX, startY);
+            this.counter = 0;
+            this.move =  function moveDot() {
+                if (!this.direction) {
+                    var dirType = getRandomDirection();
+                    this.direction = directions[dirType];
+                }
+
+                // Change direction every 10 steps
+                if (this.counter === 10) {
+                    this.counter = 0;
+                    var dirType = getRandomDirection();
+                    this.direction = directions[dirType];
+                }
+
+                var newPosX = this.vector.x + this.direction.speedX;
+                var newPosY = this.vector.y + this.direction.speedY;
+
+                if (!willColide(newPosX, newPosY) && !isEdge(newPosX, newPosY)) {
+                    this.vector.x = newPosX;
+                    this.vector.y = newPosY;
+                }
+
+                this.counter++;
+            };
+
+            this.draw =  function drawDot() {
+                ctx.beginPath();
+                ctx.arc(this.vector.x, this.vector.y, dotRadius, 0, 2*Math.PI);
+                ctx.fillStyle = "red";
+                ctx.fill();
+            };
+        }
+
 
         function drawObstacles() {
             ctx.fillStyle = "white";
@@ -113,45 +162,12 @@
             });
         }
 
-        function drawDot() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, dotRadius, 0, 2*Math.PI);
-            ctx.fillStyle = "red";
-            ctx.fill();
-        }
-
-        function clear() {
-            ctx.clearRect(0, 0, gw, gh);
-        }
 
         function getRandomDirection() {
             var rnd = Math.floor(Math.random() * Math.floor(7));
             return DIR_TYPES[rnd];
         }
 
-        function moveDot() {
-            if (!this.direction) {
-                var dirType = getRandomDirection();
-                this.direction = directions[dirType];
-            }
-
-            // Change direction every 10 steps
-            if (this.counter === 10) {
-                this.counter = 0;
-                var dirType = getRandomDirection();
-                this.direction = directions[dirType];
-            }
-
-            var newPosX = this.x + this.direction.speedX;
-            var newPosY = this.y + this.direction.speedY;
-
-            if (!willColide(newPosX, newPosY) && !isEdge(newPosX, newPosY)) {
-                this.x = newPosX;
-                this.y = newPosY;
-            }
-
-            this.counter++;
-        }
 
         function isEdge(posX, posY) {
             var r = dotRadius;
@@ -175,11 +191,72 @@
             return colidesWith ? true : false;
         }
 
-        window.onkeypress = function(e) {
-            if (e.keyCode === 103) {
-                showGrid = !showGrid;
+        function setupListeners() {
+            window.onkeypress = function(e) {
+                var code = e.keyCode;
+                if (code === KEY_CODES.G) {
+                    showGrid = !showGrid;
+                } else if (code === KEY_CODES.Space) {
+                    if (Main.running) {
+                        Main.pause();
+                    } else {
+                        Main.animate();
+                    }
+                }
             }
         }
+
+
+        var Main = {
+            initialized: false,
+            running: false,
+            canvas: null,
+            context: null,
+            grid: null,
+            obstacles: null,
+            generation: null,
+
+            interval: null,
+
+            init(canvas, ctx, grid, obstacles, generation) {
+                this.initialized = true;
+
+                this.canvas = canvas;
+                this.context = ctx;
+                this.grid = grid;
+                this.obstacles = obstacles;
+                this.generation = generation;
+            },
+
+            clearCanvas() {
+                if (this.context) {
+                    this.context.clearRect(0, 0, gw, gh);
+                }
+            },
+
+            _onFrame() {
+                this.clearCanvas();
+                if (showGrid) { 
+                    this.grid.draw();
+                }
+                drawObstacles();
+
+                this.generation.forEach(function(dot) {
+                    dot.move();
+                    dot.draw();
+                });
+            },
+
+            animate() {
+                this.running = true;
+                this.interval = setInterval(this._onFrame.bind(this), FRAMERATE);
+            },
+
+            pause() {
+                this.running = false;
+                clearInterval(this.interval);
+            }
+        };
 
         window.onload = function() {
             canvas = document.getElementById("mycanvas");
@@ -188,19 +265,11 @@
             canvas.height = gh;
 
             var generation = generateDots();
+            var grid = new Grid(g, numOfRows, numOfColumns, gw, gh);
 
-            setInterval(function() {
-                clear();
-                if (showGrid) {
-                    drawGrid();
-                }
-                drawObstacles();
-
-                generation.forEach(function(dot) {
-                    dot.move();
-                    dot.draw();
-                });
-            }, FRAMERATE);
+            Main.init(canvas, ctx, grid, obstacles, generation);
+            setupListeners();
+            Main.animate();
         }
     </script>
 </body>
