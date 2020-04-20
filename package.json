@@ -1,0 +1,22 @@
+{
+  "name": "dots",
+  "version": "1.0.0",
+  "description": "simple genetic algorythm example with results represented on canvas",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sheshum/dots.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sheshum/dots/issues"
+  },
+  "homepage": "https://github.com/sheshum/dots#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
