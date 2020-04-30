@@ -1,4 +1,4 @@
-const VELOCITY = 5;
+const VELOCITY = 50;
 
 const DIR_TYPES = ["N", "NE", "E", "ES", "S", "SW", "W", "NW"];
 const directions = {
@@ -28,7 +28,7 @@ class ObstacleCourse {
     checkColision(position, velocity) {
         const x = position.x + velocity.x;
         const y = position.y + velocity.y;
-        if (colidesWithEdge(x, y) || colidesWithObstacle(x, y)) {
+        if (colidesWithEdge(x, y) || colidesWithObstacle.call(this, x, y)) {
             return true;
         }
         return false;
@@ -36,7 +36,16 @@ class ObstacleCourse {
     
 
     targetReached(position) {
-        return false;
+        const t = this.target;
+        const halfWidth = t.w / 2;
+        const halfHeight = t.h / 2 ;
+        const centerX = t.x + halfWidth;
+        const centerY = t.y + halfHeight;
+
+        const diffX = Math.abs(centerX - position.x);
+        const diffY = Math.abs(centerY - position.y);
+
+        return (diffX <= halfWidth && diffY <= halfHeight);
     }
 
     getDirection(move) {
@@ -48,7 +57,7 @@ class ObstacleCourse {
 function colidesWithEdge(posX, posY) {
     const r = dotRadius;
     const leftEdge = posX - r;
-    const rightEdge = posx + r;
+    const rightEdge = posX + r;
     const topEdge = posY - r;
     const bottomEdge = posY + r;
 

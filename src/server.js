@@ -1,5 +1,6 @@
 const path = require('path');
 const express = require('express');
+const bodyParser = require('body-parser');
 const _log = console.log;
 
 const router = require("./router");
@@ -7,11 +8,17 @@ const router = require("./router");
 const PORT = 5001;
 const app = express();
 
+
+
+app.use("/", express.static(path.join(__dirname, "../public/")))
 app.use("/api", router);
 
-app.get("/*", (_req, res) => {
+app.all("/*", (_req, res) => {
     res.sendFile(path.join(__dirname, "../public/index.html"));
 });
+
+// app.use(bodyParser.urlencoded());
+// app.use(bodyParser.json());
 
 
 function onServerUp() {

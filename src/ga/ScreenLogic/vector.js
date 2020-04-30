@@ -4,9 +4,19 @@ class Vector2D {
         this.y = y;
     }
 
-    add(vector) {
+    set(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    add(x, y) {
+        this.x += x;
+        this.y += y;
+    }
+
+    addVector(vector) {
         this.x += vector.x;
-        this.y += vaectory;
+        this.y += vector.y;
     }
 }
 
