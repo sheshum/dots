@@ -26,7 +26,7 @@ class Dot {
                 this.vel.set(vel.x, vel.y);
             }
             this.pos.addVector(this.vel);
-            this.moves.push(gene);
+            this.moves.push(this.vel);
         });
     }
 

@@ -34,9 +34,17 @@
             Main.generation = GEN;
         }
 
-        function sendGenerateData() {
+        function showLoader(show) {
             var loader = document.getElementsByClassName("loader")[0];
-            loader.classList.remove("hidden");
+            if (show) {
+                loader.classList.remove("hidden");
+            } else {
+                loader.classList.add("hidden");
+            }
+        }
+
+        function sendGenerateData() {
+            showLoader(true);
             console.log("Generate data...");
             fetch("http://localhost:5001/api/ga/results", {
                 method: "post",
@@ -48,7 +56,7 @@
             }).then(function(response) {
                 return response.json();
             }).then(function(data) {
-                loader.classList.add("hidden");
+                showLoader(false);
                 console.log(data);
                 var generation = data.matingPool.map(function(dot) {
                     return new Dot2(dot.dna);
