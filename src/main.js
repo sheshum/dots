@@ -1,9 +1,10 @@
 const GA = require('./ga/ga');
+const dataHandler = require("./libs/dataHandler");
 
 
-const MAX_GENERATIONS = 50;
-const POOL_SIZE = 300;
-const DNA_LENGTH = 150;
+const MAX_GENERATIONS = 1;
+const POOL_SIZE = 100;
+const DNA_LENGTH = 500;
 const CROSS_OVER_RATE = 0.95;
 const MUTATION_RATE = 0.02;
 const ELITISM_COUNT = 3;
@@ -16,8 +17,11 @@ const obstacles = [
 ];
 
 const target = { x: 1500, y: 400, w: 100, h: 150 };
-function startGA() {
-    console.log("Starting...")
+
+async function startGA() {
+    console.log("Starting...");
+    dataHandler.clearData();
+
     let generation = 1;
     const ga = new GA(POOL_SIZE, CROSS_OVER_RATE, MUTATION_RATE, ELITISM_COUNT);
 
@@ -25,12 +29,11 @@ function startGA() {
     let population = ga.initPopulation( DNA_LENGTH );
 
     // Evaluate population
-
     ga.evaluate( population, obstacles, target );
-
-
+    
     do {
-
+        
+        dataHandler.savePopulationData(population, generation);
         // Print fittest individual from population
         const charlieSheen = population.getFittest(0);
         console.log(`Generation: ${generation} \t||\t Best solution: ${charlieSheen.getFitness()} \t||\t Average: ${population.getAverageFitness()}`);
@@ -43,7 +46,7 @@ function startGA() {
 
         // Evaluate population
         ga.evaluate( population, obstacles, target );
-
+        
         generation += 1;
 
     } while (ga.shouldTerminate(generation, MAX_GENERATIONS, population) === false)
@@ -52,7 +55,6 @@ function startGA() {
     console.log(`Generation: ${generation} \t||\t Best solution: ${charlieSheen.getFitness()} \t||\t Average: ${population.getAverageFitness()}`);
 
     return population;
-
 }
 
 module.exports = { startGA };

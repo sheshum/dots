@@ -26,19 +26,20 @@ class Individual {
         this.dna[offset] = gene;
     }
 
+    getMoves() {
+        return this.moves;
+    }
+
+    setMoves(moves) {
+        this.moves = moves;
+    }
+
     getFitness() {
         return this.fitness;
     }
 
-
     setFitness(fitness) {
         this.fitness = fitness;
-    }
-
-    print() {
-       
-        return `Fitness:  * ${this.fitness} *`
-
     }
 };
 

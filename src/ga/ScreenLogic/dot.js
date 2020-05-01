@@ -7,13 +7,13 @@ class Dot {
         this.start = new Vector2D(this.pos.x, this.pos.y);
         this.vel = new Vector2D(0, 0);
         this.dna = dna;
-        this.moves = [];
     }
 
     run() {
+        const moves = [];
         this.dna.forEach(gene => {
             if (this.obstacleCourse.targetReached(this.pos)) {
-                this.moves.push(false);
+                moves.push(false);
                 return;
             }
             
@@ -26,8 +26,10 @@ class Dot {
                 this.vel.set(vel.x, vel.y);
             }
             this.pos.addVector(this.vel);
-            this.moves.push(this.vel);
+            moves.push({ vx: this.vel.x, vy: this.vel.y });
         });
+
+        return moves;
     }
 
     getScore(target) {

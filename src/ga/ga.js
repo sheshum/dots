@@ -108,14 +108,19 @@ function selectParent(population) {
             return matingPool[i];
         }
     }
+
     return matingPool[size - 1];
 }
 
 function calcFitness(individual, obstacleCourse) {
     const dot = new Dot( individual.dna, obstacleCourse );
-    dot.run();
+
+    const moves = dot.run();
+    individual.setMoves( moves );
+
     const fitness = dot.getScore( obstacleCourse.target );
     individual.setFitness( fitness );
+
     return fitness;
 }
 
