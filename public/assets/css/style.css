@@ -4,7 +4,7 @@ html, body {
     margin: 0;
     padding: 0;
     background-color: #595f64;
-    cursor: url("./images/cursor-neon.png"), pointer;
+    cursor: url("../images/cursor-neon.png"), pointer;
 }
 
 a.button {
@@ -33,7 +33,7 @@ a.button {
     transition: all 0.3s ease-in-out 0s;
 }
 
-a.button:hover {
+a.button:hover:not([disabled]) {
     cursor: pointer;
     /* box-shadow: 0px 5px 40px -10px rgba(230, 240, 143, 0.57); */
     transition: all 0.3s ease-in-out 0s;

@@ -2,13 +2,28 @@ var GEN;
 var HOST = "http://localhost:5001";
 
 
+var UI = {
+    btnGenerateData: null,
+    btnRunSimulation: null,
+    init() {
+        var loader = document.getElementsByClassName("loader")[0];
+        var btnGenerateData = document.getElementById("ga-btn-generate");
+        var btnRunSimulation = document.getElementById("ga-btn-run");
+        this.loader = loader;
+        this.btnGenerateData = btnGenerateData;
+        this.btnRunSimulation = btnRunSimulation;
 
-function showLoader(show) {
-    var loader = document.getElementsByClassName("loader")[0];
-    if (show) {
-        loader.classList.remove("hidden");
-    } else {
-        loader.classList.add("hidden");
+        btnRunSimulation.setAttribute("disabled", true);
+    },
+
+    showLoader(show) {
+        if (this.loader) {
+            if (show) {
+                this.loader.classList.remove("hidden");
+            } else {
+                this.loader.classList.add("hidden");
+            }
+        }
     }
 }
 
@@ -44,21 +59,26 @@ var api = {
 }
 
 function generateData() {
-    showLoader(true);
+    UI.showLoader(true);
+    UI.btnGenerateData.setAttribute("disabled", true);
     api.sendGenerateData().then(function(_data) {
-        showLoader(false);
+        // UI.btnGenerateData.removeAttribute("disabled");
+        UI.btnRunSimulation.removeAttribute("disabled");
+        UI.showLoader(false);
     });
 }
 
 function startSimulation() {
-    showLoader(true);
+    UI.showLoader(true);
     return api.getAllResults().then(function(data) {
-        showLoader(false);
+        UI.showLoader(false);
 
         var firstGenData = data[0];
         var generation = firstGenData.map(function(moves) {
             return new Dot2(moves);
         });
+
+        UI.btnRunSimulation.setAttribute("disabled", true);
         Main.generation = generation;
     }).catch(function(err) {
         console.log(err);
@@ -102,9 +122,7 @@ var ctx;
 var canvas;
 
 var dotRadius = 5;
-var showGrid = true;
-
-
+var showGrid = false;
 var g = 50;
 var numOfRows = 14;
 var numOfColumns = 32;
@@ -117,13 +135,14 @@ function random(min, max) {
 
 function generateDots() {
     var smart_dots = new Array(NUM_OF_DOTS).fill(null).map(function() {
-        return new Dot(random(30, 180), random(30, 180));
+        // return new Dot(random(30, 180), random(30, 180));
+        return new Dot(100, 100);
     });
 
     return smart_dots;
 }
 
-function Grid(g, numOfRows, numOfColumns, gw, gh) {
+function Grid(g, numOfRows, numOfColumns) {
     this.g = g;
     this.numOfRows = numOfRows;
     this.numOfColumns = numOfColumns;
@@ -374,6 +393,8 @@ window.onload = function() {
     ctx = canvas.getContext("2d");
     canvas.width = gw;
     canvas.height = gh;
+
+    UI.init();
 
     var generation = generateDots();
     var grid = new Grid(g, numOfRows, numOfColumns, gw, gh);

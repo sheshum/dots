@@ -17,8 +17,7 @@ class Dot {
                 return;
             }
             
-            const direction = this.obstacleCourse.getDirection(gene);
-            const vel = new Vector2D(direction.speedX, direction.speedY);
+            const vel = this.obstacleCourse.getVelocity(gene);
 
             if (this.obstacleCourse.checkColision(this.pos, vel)) {
                 this.vel.set(0, 0);

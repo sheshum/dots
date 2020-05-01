@@ -51,8 +51,8 @@ async function startGA() {
 
     } while (ga.shouldTerminate(generation, MAX_GENERATIONS, population) === false)
 
-    const charlieSheen = population.getFittest(0);
-    console.log(`Generation: ${generation} \t||\t Best solution: ${charlieSheen.getFitness()} \t||\t Average: ${population.getAverageFitness()}`);
+    // const charlieSheen = population.getFittest(0);
+    // console.log(`Generation: ${generation} \t||\t Best solution: ${charlieSheen.getFitness()} \t||\t Average: ${population.getAverageFitness()}`);
 
     return population;
 }

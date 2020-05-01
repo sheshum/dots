@@ -1,3 +1,5 @@
+const Vector2D = require('./vector');
+
 const VELOCITY = 50;
 
 const DIR_TYPES = ["N", "NE", "E", "ES", "S", "SW", "W", "NW"];
@@ -48,9 +50,11 @@ class ObstacleCourse {
         return (diffX <= halfWidth && diffY <= halfHeight);
     }
 
-    getDirection(move) {
+    getVelocity(move) {
         const dirStr = DIR_TYPES[move];
-        return directions[dirStr];
+        const direction = directions[dirStr];
+        const vel = new Vector2D(direction.speedX, direction.speedY);
+        return vel;
     }
 };
 
