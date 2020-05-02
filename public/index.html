@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Smart Dots</title>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/style.css"/>
 </head>
 <style>
@@ -14,12 +15,24 @@
 <body>
 
     <div class="wrapper-left">
+        <div id="ga-counter">
+            <div class="ga-counter-el">Generation: 36</div>
+            <div class="ga-counter-el">Step: 245</div>
+        </div>
         <canvas id="mycanvas">
             Canvas not supported
         </canvas>
         <div class="lower-controller">
-            <a id="ga-btn-run" class="button" onclick="startSimulation()">Run simulation</a>
-            <a id="ga-btn-generate" class="button" onclick="generateData()">Generate data</a>
+            <div class="controls">
+                <button class="btn-controls"><i class="fa fa-fast-backward"></i></button>
+                <button class="btn-controls"><i class="fa fa-step-backward"></i></button>
+                <button class="btn-controls"><i class="fa fa-pause"></i></button>
+                <button class="btn-controls"><i class="fa fa-stop"></i></button>
+                <button class="btn-controls"><i class="fa fa-step-forward"></i></button>
+                <button class="btn-controls"><i class="fa fa-fast-forward"></i></button>
+            </div>
+            <button id="ga-btn-run" class="button" onclick="startSimulation()">Run simulation</button>
+            <button id="ga-btn-generate" class="button" onclick="generateData()">Generate data</button>
         </div>
         <div class="loader hidden"></div>
     </div>

@@ -3,17 +3,19 @@ var HOST = "http://localhost:5001";
 
 
 var UI = {
+    loader: null,
+    ga_counter: null,
     btnGenerateData: null,
     btnRunSimulation: null,
-    init() {
-        var loader = document.getElementsByClassName("loader")[0];
-        var btnGenerateData = document.getElementById("ga-btn-generate");
-        var btnRunSimulation = document.getElementById("ga-btn-run");
-        this.loader = loader;
-        this.btnGenerateData = btnGenerateData;
-        this.btnRunSimulation = btnRunSimulation;
+    init(canvas) {
+        this.loader = document.getElementsByClassName("loader")[0];
+        this.ga_counter = document.getElementById("ga-counter");
+        this.btnGenerateData = document.getElementById("ga-btn-generate");
+        this.btnRunSimulation = document.getElementById("ga-btn-run");
 
-        btnRunSimulation.setAttribute("disabled", true);
+        // var left = canvas.width - 300;
+        // this.ga_counter.style.left = left + "px";
+        this.btnRunSimulation.setAttribute("disabled", true);
     },
 
     showLoader(show) {
@@ -394,7 +396,7 @@ window.onload = function() {
     canvas.width = gw;
     canvas.height = gh;
 
-    UI.init();
+    UI.init(canvas);
 
     var generation = generateDots();
     var grid = new Grid(g, numOfRows, numOfColumns, gw, gh);

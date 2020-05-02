@@ -5,14 +5,55 @@ html, body {
     padding: 0;
     background-color: #595f64;
     cursor: url("../images/cursor-neon.png"), pointer;
+    /* font-family: 'Roboto', sans-serif; */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-a.button {
+button:hover {
+    cursor: pointer;
+}
+
+#ga-counter {
+    position: absolute;
+    top: 10px;
+    /* left: 25px; */
+    left: 1300px;
+    z-index: 1;
+    color: antiquewhite;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+#ga-counter .ga-counter-el {
+    display: block;
+    position: relative;
+    float: left;
+    margin-right: 2em;
+    letter-spacing: 0.3em;
+}
+
+.controls {
+    float: left;
+    margin-top: 10px;
+    margin-left: 150px;
+}
+
+.controls button {
+    background-color: #282a2c;
+    color: #9da7af;
+}
+
+.controls button i {
+    font-size: 1em;
+    padding: 10px;
+}
+
+.button {
     display: block;
     position: relative;
     float: right;
     margin: 10px;
-    padding: 15px;
+    padding: 10px;
     min-width: 150px;
     border: none;
     border-radius: 3px;
@@ -22,7 +63,6 @@ a.button {
     text-decoration: none;
     text-transform: capitalize;
     font-weight: 700;
-    font-family:'Roboto',sans-serif;
     text-align: center;
     letter-spacing: 2px;
     /* box-shadow: 0px 5px 40px -10px rgba(230, 240, 143, 0.57); */
@@ -33,30 +73,21 @@ a.button {
     transition: all 0.3s ease-in-out 0s;
 }
 
-a.button:hover:not([disabled]) {
-    cursor: pointer;
+.button:hover:not([disabled]) {
     /* box-shadow: 0px 5px 40px -10px rgba(230, 240, 143, 0.57); */
     transition: all 0.3s ease-in-out 0s;
     letter-spacing: 5px;
 }
 
-a.button[disabled] {
+.button[disabled] {
     background: #95b7b9;
-    cursor: not-allowed;
+    cursor: default;
 }
 
 canvas {
-    /* position: absolute;
-    width: 100%;
-    height: 100%; */
     border: 1px solid gray;
     background-color: #282a2c;
 }
-
-/* canvas:hover {
-    background-color: #f6b93b;
-    cursor: url('./images/swag-mouse-cursor.jpg'), pointer;
-} */
 
 .wrapper-left {
     width: 1600px;
