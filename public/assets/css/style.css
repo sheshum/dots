@@ -41,6 +41,8 @@ button:hover {
 .controls button {
     background-color: #282a2c;
     color: #9da7af;
+    /* border: 1px solid whitesmoke; */
+    border: none;
 }
 
 .controls button i {

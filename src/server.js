@@ -8,7 +8,8 @@ const router = require("./router");
 const PORT = 5001;
 const app = express();
 
-
+app.use(bodyParser.urlencoded());
+app.use(bodyParser.json());
 
 app.use("/", express.static(path.join(__dirname, "../public/")))
 app.use("/api", router);
@@ -17,8 +18,7 @@ app.all("/*", (_req, res) => {
     res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
-// app.use(bodyParser.urlencoded());
-// app.use(bodyParser.json());
+
 
 
 function onServerUp() {

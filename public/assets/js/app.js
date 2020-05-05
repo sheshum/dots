@@ -29,14 +29,36 @@ var UI = {
     }
 }
 
+var obstacles = [
+    { x: 200, y: 200, w: 50, h: 300 },
+    { x: 400, y: 0, w: 100, h: 250 },
+    { x: 600, y: 450 , w: 150, h: 200 },
+    { x: 1000, y: 300, w: 400, h: 150 }
+];
+
+var target = { x: 1550, y: 150, w: 50, h: 100 };
+
+var SETTINGS = {
+    dna_length: 100
+};
+
 var api = {
     sendGenerateData() {
-        
         console.log("Generate data...");
+        var data = {
+            obstacles: obstacles,
+            target: target,
+            maxGenerations: 30,
+            poolSize: 200,
+            dnaLength: SETTINGS.dna_length,
+            crossOverRate: 0.95,
+            mutationRate: 0.02,
+            elitismCount: 3
+        };
         return fetch(`${HOST}/api/ga/generate`, {
             method: "post",
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: "somedata" })
+            body: JSON.stringify(data)
         }).then(function(response) {
             return response.json();
         }).then(function(data) {
@@ -64,9 +86,14 @@ function generateData() {
     UI.showLoader(true);
     UI.btnGenerateData.setAttribute("disabled", true);
     api.sendGenerateData().then(function(_data) {
+        // var generation = _data.matingPool.map(function(dot) {
+        //     return new Dot(dot.dna);
+        // });
         // UI.btnGenerateData.removeAttribute("disabled");
         UI.btnRunSimulation.removeAttribute("disabled");
         UI.showLoader(false);
+
+        // Main.generation = generation;
     });
 }
 
@@ -75,27 +102,20 @@ function startSimulation() {
     return api.getAllResults().then(function(data) {
         UI.showLoader(false);
 
-        var firstGenData = data[0];
+        var firstGenData = data[data.length - 1];
         var generation = firstGenData.map(function(moves) {
             return new Dot2(moves);
         });
 
         UI.btnRunSimulation.setAttribute("disabled", true);
-        Main.generation = generation;
+        Engine.generation = generation;
     }).catch(function(err) {
         console.log(err);
-    })
+    });
 }
 
 
-var obstacles = [
-    { x: 200, y: 200, w: 50, h: 300 },
-    { x: 400, y: 0, w: 100, h: 250 },
-    { x: 600, y: 450 , w: 150, h: 200 },
-    { x: 1000, y: 300, w: 400, h: 150 }
-];
 
-var target = { x: 1550, y: 150, w: 50, h: 100 };
 
 
 var NUM_OF_DOTS = 100;
@@ -180,105 +200,92 @@ function Vector2D(x, y) {
 
 function Dot2(dna) {
     this.dna = dna;
-    this.pos = { x: 100, y: 100 }
+    this.pos = new Vector2D(100, 100);
+    this.totalSteps = -1;
     this.step = 0;
     this.counter = 0;
     this.finished = false;
-    this.move = function() {
-        if (this.finished) {
+    this.color = "red";
+    this.move = function(step, counter) {
+
+        if (this.finished === true) {
             return;
         }
-        if (!this.vel) {
-            var nextMove = dna[this.step];
-            if (nextMove === false) {
-                return;
-            }
-            this.vel = nextMove;
+
+        var currentMove = dna[step];
+
+        if (currentMove === "T") {
+            this.targetReached = true;
+            this.color = "blue";
+            return;
         }
+        this.vector = { vx: currentMove[0], vy: currentMove[1] };
+        this.m = currentMove[2];
 
-        // Change direction every 10 frames
-        if (this.counter === velocityIncrement) {
-            this.counter = 0;
-            this.step += 1;
-            var nextMove = dna[this.step];
-            if (nextMove === false) {
-                return;
-            }
 
-            if (typeof nextMove === "undefined") {
-                this.finished = true;
-                return;
-            }
+        var vx;
+        var vy;
 
-            this.vel = nextMove;
-        }
-
-        var vx, vy;
-
-        if (this.vel.vx === 0) {
+        // If should not move in this frame
+        if (this.m === 0 || this.m < counter) {
             vx = 0;
-        } else {
-            vx = this.vel.vx / velocityIncrement;
-        }
-
-        if (this.vel.vy === 0) {
             vy = 0;
         } else {
-            vy = this.vel.vy / velocityIncrement;
+            vx = this.vector.vx * 5;
+            vy = this.vector.vy * 5;
         }
-
+    
         this.pos.x += vx;
         this.pos.y += vy;
-
-        this.counter += 1;
-
     }
 
     this.draw =  function drawDot() {
         if (!this.finished) {
             ctx.beginPath();
             ctx.arc(this.pos.x, this.pos.y, dotRadius, 0, 2*Math.PI);
-            ctx.fillStyle = "red";
+            ctx.fillStyle = this.color;
             ctx.fill();
         }
+        if (this.targetReached) {
+            this.finished = true;
+        }
     };
 }
 
+// function Dot(startX, startY) {
+//     this.vector = new Vector2D(startX, startY);
+//     this.counter = 0;
+//     this.move =  function() {
+//         if (!this.direction) {
+//             var dirType = getRandomDirection();
+//             this.direction = directions[dirType];
+//         }
 
-function Dot(startX, startY) {
-    this.vector = new Vector2D(startX, startY);
-    this.counter = 0;
-    this.move =  function moveDot() {
-        if (!this.direction) {
-            var dirType = getRandomDirection();
-            this.direction = directions[dirType];
-        }
+//         // Change direction every 10 steps
+//         if (this.counter === 10) {
+//             this.counter = 0;
+//             var dirType = getRandomDirection();
+//             this.direction = directions[dirType];
+//         }
 
-        // Change direction every 10 steps
-        if (this.counter === 10) {
-            this.counter = 0;
-            var dirType = getRandomDirection();
-            this.direction = directions[dirType];
-        }
+//         var newPosX = this.vector.x + this.direction.speedX;
+//         var newPosY = this.vector.y + this.direction.speedY;
 
-        var newPosX = this.vector.x + this.direction.speedX;
-        var newPosY = this.vector.y + this.direction.speedY;
+//         if (!willColide(newPosX, newPosY) && !isEdge(newPosX, newPosY)) {
+//             this.vector.x = newPosX;
+//             this.vector.y = newPosY;
+//         }
 
-        if (!willColide(newPosX, newPosY) && !isEdge(newPosX, newPosY)) {
-            this.vector.x = newPosX;
-            this.vector.y = newPosY;
-        }
+//         this.counter++;
+//     };
 
-        this.counter++;
-    };
-
-    this.draw =  function drawDot() {
-        ctx.beginPath();
-        ctx.arc(this.vector.x, this.vector.y, dotRadius, 0, 2*Math.PI);
-        ctx.fillStyle = "red";
-        ctx.fill();
-    };
-}
+//     this.draw =  function() {
+//         ctx.beginPath();
+//         ctx.arc(this.vector.x, this.vector.y, dotRadius, 0, 2*Math.PI);
+//         ctx.fillStyle = "red";
+//         ctx.fill();
+//     };
+// }
 
 
 function drawObstacles() {
@@ -294,33 +301,33 @@ function drawTarget(ob) {
 }
 
 
-function getRandomDirection() {
-    var rnd = Math.floor(Math.random() * Math.floor(7) + 1);
-    return DIR_TYPES[rnd];
-}
+// function getRandomDirection() {
+//     var rnd = Math.floor(Math.random() * Math.floor(7) + 1);
+//     return DIR_TYPES[rnd];
+// }
 
 
-function isEdge(posX, posY) {
-    var r = dotRadius;
-    if (posX - r >= 0 && posX + r <= canvas.width) {
-        if (posY - r >= 0 && posY + r <= canvas.height) {
-            return false;
-        }
-    }
+// function isEdge(posX, posY) {
+//     var r = dotRadius;
+//     if (posX - r >= 0 && posX + r <= canvas.width) {
+//         if (posY - r >= 0 && posY + r <= canvas.height) {
+//             return false;
+//         }
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
-function willColide(posX, posY) {
-    var r = dotRadius;
+// function willColide(posX, posY) {
+//     var r = dotRadius;
 
-    var colidesWith = obstacles.find(function(ob) {
-        return (posX + r >= ob.x && posX - r <= (ob.x + ob.w)
-            && posY + r >= ob.y && posY - r <= (ob.y + ob.h));
-    });
+//     var colidesWith = obstacles.find(function(ob) {
+//         return (posX + r >= ob.x && posX - r <= (ob.x + ob.w)
+//             && posY + r >= ob.y && posY - r <= (ob.y + ob.h));
+//     });
 
-    return colidesWith ? true : false;
-}
+//     return colidesWith ? true : false;
+// }
 
 function setupListeners() {
     window.onkeypress = function(e) {
@@ -328,17 +335,17 @@ function setupListeners() {
         if (code === KEY_CODES.G) {
             showGrid = !showGrid;
         } else if (code === KEY_CODES.Space) {
-            if (Main.running) {
-                Main.pause();
+            if (Engine.running) {
+                Engine.pause();
             } else {
-                Main.animate();
+                Engine.animate();
             }
         }
     }
 }
 
 
-var Main = {
+var Engine = {
     initialized: false,
     running: false,
     canvas: null,
@@ -367,19 +374,34 @@ var Main = {
 
     _onFrame() {
         this.clearCanvas();
+
         if (showGrid) { 
             this.grid.draw();
         }
+
         drawTarget(target);
         drawObstacles();
 
-        this.generation.forEach(function(dot) {
-            dot.move();
-            dot.draw();
-        });
+        // Every 10 frames select new move
+        if (this.counter > 10) {
+            this.counter = 1;
+            this.step += 1;
+        }
+
+        if (this.generation.length > 0 && this.step < SETTINGS.dna_length) {
+            this.generation.forEach(function(dot) {
+                dot.move(this.step, this.counter);
+                dot.draw();
+            }.bind(this));
+
+            this.counter += 1;
+        }
+
     },
 
     animate() {
+        this.counter = 1;
+        this.step = 0;
         this.running = true;
         this.interval = setInterval(this._onFrame.bind(this), FRAMERATE);
     },
@@ -398,10 +420,11 @@ window.onload = function() {
 
     UI.init(canvas);
 
-    var generation = generateDots();
+    // var generation = generateDots();
+
     var grid = new Grid(g, numOfRows, numOfColumns, gw, gh);
 
-    Main.init(canvas, ctx, grid, obstacles, []);
+    Engine.init(canvas, ctx, grid, obstacles, []);
     setupListeners();
-    Main.animate();
+    Engine.animate();
 }

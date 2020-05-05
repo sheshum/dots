@@ -113,9 +113,9 @@ function selectParent(population) {
 }
 
 function calcFitness(individual, obstacleCourse) {
-    const dot = new Dot( individual.dna, obstacleCourse );
+    const dot = new Dot( individual.dna );
 
-    const moves = dot.run();
+    const moves = dot.run( obstacleCourse );
     individual.setMoves( moves );
 
     const fitness = dot.getScore( obstacleCourse.target );

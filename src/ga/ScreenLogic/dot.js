@@ -1,31 +1,29 @@
 const Vector2D = require('./vector');
 
 class Dot {
-    constructor(dna, obstacleCourse) {
-        this.obstacleCourse = obstacleCourse;
+    constructor(dna) {
         this.pos = new Vector2D(100, 100);
         this.start = new Vector2D(this.pos.x, this.pos.y);
         this.vel = new Vector2D(0, 0);
         this.dna = dna;
     }
 
-    run() {
+    run(obstacleCourse) {
         const moves = [];
         this.dna.forEach(gene => {
-            if (this.obstacleCourse.targetReached(this.pos)) {
-                moves.push(false);
+            const vector = obstacleCourse.getVector(gene);
+            // value from 0 - 50;
+            const m = obstacleCourse.getVelocityM(this.pos, vector);
+
+            this.vel.set(vector.vx * m * 5, vector.vy * m * 5);
+            this.pos.addVector(this.vel);
+
+            if (obstacleCourse.targetReached(this.pos)) {
+                moves.push("T");
                 return;
             }
-            
-            const vel = this.obstacleCourse.getVelocity(gene);
 
-            if (this.obstacleCourse.checkColision(this.pos, vel)) {
-                this.vel.set(0, 0);
-            } else {
-                this.vel.set(vel.x, vel.y);
-            }
-            this.pos.addVector(this.vel);
-            moves.push({ vx: this.vel.x, vy: this.vel.y });
+            moves.push([vector.vx, vector.vy, m]);
         });
 
         return moves;
