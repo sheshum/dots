@@ -17,7 +17,7 @@ button:hover {
     position: absolute;
     top: 10px;
     /* left: 25px; */
-    left: 1300px;
+    left: 1270px;
     z-index: 1;
     color: antiquewhite;
     font-size: 0.8em;
@@ -39,9 +39,11 @@ button:hover {
 }
 
 .controls button {
-    background-color: #282a2c;
-    color: #9da7af;
-    /* border: 1px solid whitesmoke; */
+    /* background-color: #282a2c;
+    color: #9da7af; */
+    background-color: #bcdadb;
+    color: #454b4b;
+    /* border: 2px solid rgb(56, 58, 58); */
     border: none;
 }
 

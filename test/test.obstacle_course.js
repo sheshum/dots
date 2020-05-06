@@ -22,17 +22,33 @@ describe('ObstacleCourse', () => {
     it("should return that target is reached", () => {
         const obstacleCourse = new ObstacleCourse(obstacles, target);
 
-        const pos1 = { x: 1570, y: 160 };
-        let targetReached = obstacleCourse.targetReached(pos1);
+        let pos = { x: 1570, y: 160 };
+        let targetReached = obstacleCourse.targetReached(pos);
         expect(targetReached).to.equal(true);
 
 
-        const pos2 = { x: 1570, y: 150 };
-        targetReached = obstacleCourse.targetReached(pos2);
+        pos = { x: 1570, y: 150 };
+        targetReached = obstacleCourse.targetReached(pos);
         expect(targetReached).to.equal(true);
 
-        const pos3 = { x: 1550, y: 160 };
-        targetReached = obstacleCourse.targetReached(pos3);
+        pos = { x: 1550, y: 160 };
+        targetReached = obstacleCourse.targetReached(pos);
         expect(targetReached).to.equal(true);
+
+        pos = { x: 1575, y: 200 };
+        targetReached = obstacleCourse.targetReached(pos);
+        expect(targetReached).to.equal(true);
+
+        pos = { x: 1550, y: 250 };
+        targetReached = obstacleCourse.targetReached(pos);
+        expect(targetReached).to.equal(true);
+    });
+
+    it("#getVelocityM()", () => {
+        const obstacleCourse = new ObstacleCourse(obstacles, target);
+        const pos = { x: 350, y: 205 };
+        const vector = { vx: 1, vy: -1 };
+
+        const m = obstacleCourse.getVelocityM(pos, vector);
     });
 })
