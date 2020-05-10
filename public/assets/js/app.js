@@ -41,6 +41,31 @@ var gh = numOfRows *g; // 700
 //     "NW": { speedX: -VELOCITY, speedY: -VELOCITY }
 // };
 
+var ctx;
+var canvas;
+
+
+var SETTINGS = {
+    framerate: 20,
+    showGrid: false,
+    ga: {
+        maxGenerations: 5,
+        poolSize: 100,
+        maxSteps: 20,
+        crossOverRate: 0.95,
+        mutationRate: 0.02,
+        elitismCount: 3
+    }
+};
+
+var obstacles = [
+    { x: 200, y: 200, w: 50, h: 300 },
+    { x: 400, y: 0, w: 100, h: 250 },
+    { x: 600, y: 450 , w: 150, h: 200 },
+    { x: 1000, y: 300, w: 400, h: 150 }
+];
+
+var target = { x: 1550, y: 150, w: 50, h: 100 };
 
 
 var obstacles = [
