@@ -38,14 +38,6 @@ class ObstacleCourse {
 
         
         return (diffX <= halfWidth && diffY <= halfHeight);
-
-
-        // const posX = position.x;
-        // const posY = position.y;
-        // console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-        // console.log(posX, posY);
-        // console.log(t);
-
         // return (posX >= t.x && posX <= (t.x + t.w)
         //     && posY >= t.y && posY <= (t.y + t.h));
     }
@@ -100,8 +92,8 @@ function colidesWithEdge(posX, posY) {
 function colidesWithObstacle(obstacles, posX, posY) {
     var r = dotRadius;
     var colidesWith = obstacles.find(function(ob) {
-        return (posX + r >= ob.x && posX - r <= (ob.x + ob.w)
-            && posY + r >= ob.y && posY - r <= (ob.y + ob.h));
+        return (posX + r > ob.x && posX - r < (ob.x + ob.w)
+            && posY + r > ob.y && posY - r < (ob.y + ob.h));
     });
 
     return colidesWith ? true : false;

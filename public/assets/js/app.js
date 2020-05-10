@@ -1,21 +1,113 @@
-var GEN;
-var HOST = "http://localhost:5001";
 
+var HOST = "http://localhost:5001";
+var simData;
+
+var SETTINGS = {
+    framerate: 20,
+    showGrid: false,
+    ga: {
+        maxGenerations: 5,
+        poolSize: 7,
+        maxSteps: 150,
+        crossOverRate: 0.95,
+        mutationRate: 0.02,
+        elitismCount: 3
+    }
+};
+
+var KEY_CODES = {
+    Space: 32,
+    G_Key: 103,
+    S_Key: 115
+};
+
+var dotRadius = 5;
+var g = 50;
+var numOfRows = 14;
+var numOfColumns = 32;
+var gw = numOfColumns * g; // 1600
+var gh = numOfRows *g; // 700
+
+// var VELOCITY = 5;
+// var DIR_TYPES = ["N", "NE", "E", "ES", "S", "SW", "W", "NW"];
+// var directions = {
+//     "N": { speedX: 0, speedY: -VELOCITY },
+//     "NE": { speedX: VELOCITY, speedY: -VELOCITY },
+//     "E": { speedX: VELOCITY, speedY: 0 },
+//     "ES": { speedX: VELOCITY, speedY: VELOCITY },
+//     "S": { speedX: 0, speedY: VELOCITY },
+//     "SW": { speedX: -VELOCITY, speedY: VELOCITY },
+//     "W": { speedX: -VELOCITY, speedY: 0 },
+//     "NW": { speedX: -VELOCITY, speedY: -VELOCITY }
+// };
+
+
+
+var obstacles = [
+    { x: 200, y: 200, w: 50, h: 300 },
+    { x: 400, y: 0, w: 100, h: 250 },
+    { x: 600, y: 450 , w: 150, h: 200 },
+    { x: 1000, y: 300, w: 400, h: 150 }
+];
+
+var target = { x: 1550, y: 150, w: 50, h: 100 };
 
 var UI = {
     loader: null,
-    ga_counter: null,
     btnGenerateData: null,
     btnRunSimulation: null,
-    init(canvas) {
+    numOfGenerationsEl: null,
+    numOfStepsEl: null,
+    init() {
+        var canvas = document.getElementById("mycanvas");
+        var ctx = canvas.getContext("2d");
+        canvas.width = gw;
+        canvas.height = gh;
+
+        this.canvas = canvas;
+        this.context = ctx;
+
         this.loader = document.getElementsByClassName("loader")[0];
-        this.ga_counter = document.getElementById("ga-counter");
+        this.numOfGenerationsEl = document.getElementById("ga-no-generations");
+        this.numOfStepsEl = document.getElementById("ga-no-steps");
         this.btnGenerateData = document.getElementById("ga-btn-generate");
         this.btnRunSimulation = document.getElementById("ga-btn-run");
 
         // var left = canvas.width - 300;
         // this.ga_counter.style.left = left + "px";
         this.btnRunSimulation.setAttribute("disabled", true);
+
+        this.updateGeneration("__");
+        this.updateStep("__");
+    },
+
+    getCtx() {
+        return this.context;
+    },
+
+    reset() {
+        this.resetCounter();
+        this.clearCanvas();
+        this.btnGenerateData.removeAttribute("disabled");
+    },
+
+    clearCanvas() {
+        if (this.context) {
+            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+    },
+
+    resetCounter() {
+        this.updateStep("__");
+        this.updateGeneration("__");
+    },
+
+    updateGeneration(generation) {
+        this.numOfGenerationsEl.innerHTML = `Generation: ${generation} / ${SETTINGS.ga.maxGenerations}`;
+    },
+
+    updateStep(step) {
+        this.numOfStepsEl.innerHTML = `Step: ${step} / ${SETTINGS.ga.maxSteps}`;
     },
 
     showLoader(show) {
@@ -29,31 +121,17 @@ var UI = {
     }
 }
 
-var obstacles = [
-    { x: 200, y: 200, w: 50, h: 300 },
-    { x: 400, y: 0, w: 100, h: 250 },
-    { x: 600, y: 450 , w: 150, h: 200 },
-    { x: 1000, y: 300, w: 400, h: 150 }
-];
-
-var target = { x: 1550, y: 150, w: 50, h: 100 };
-
-var SETTINGS = {
-    dna_length: 100
-};
-
 var api = {
     sendGenerateData() {
-        console.log("Generate data...");
         var data = {
             obstacles: obstacles,
             target: target,
-            maxGenerations: 30,
-            poolSize: 200,
-            dnaLength: SETTINGS.dna_length,
-            crossOverRate: 0.95,
-            mutationRate: 0.02,
-            elitismCount: 3
+            maxGenerations: SETTINGS.ga.maxGenerations,
+            poolSize: SETTINGS.ga.poolSize,
+            dnaLength: SETTINGS.ga.maxSteps,
+            crossOverRate: SETTINGS.ga.crossOverRate,
+            mutationRate: SETTINGS.ga.mutationRate,
+            elitismCount: SETTINGS.ga.elitismCount
         };
         return fetch(`${HOST}/api/ga/generate`, {
             method: "post",
@@ -86,14 +164,8 @@ function generateData() {
     UI.showLoader(true);
     UI.btnGenerateData.setAttribute("disabled", true);
     api.sendGenerateData().then(function(_data) {
-        // var generation = _data.matingPool.map(function(dot) {
-        //     return new Dot(dot.dna);
-        // });
-        // UI.btnGenerateData.removeAttribute("disabled");
         UI.btnRunSimulation.removeAttribute("disabled");
         UI.showLoader(false);
-
-        // Main.generation = generation;
     });
 }
 
@@ -102,61 +174,22 @@ function startSimulation() {
     return api.getAllResults().then(function(data) {
         UI.showLoader(false);
 
-        var firstGenData = data[data.length - 1];
-        var generation = firstGenData.map(function(moves) {
-            return new Dot2(moves);
-        });
+        simData = data;
 
         UI.btnRunSimulation.setAttribute("disabled", true);
-        Engine.generation = generation;
+        Engine.buildCurrentGen();
+        Engine.animate();
     }).catch(function(err) {
         console.log(err);
     });
 }
-
-
-
-
-
-var NUM_OF_DOTS = 100;
-var FRAMERATE = 10;
-var VELOCITY = 5;
-var velocityIncrement = 10;
-
-var DIR_TYPES = ["N", "NE", "E", "ES", "S", "SW", "W", "NW"];
-var directions = {
-    "N": { speedX: 0, speedY: -VELOCITY },
-    "NE": { speedX: VELOCITY, speedY: -VELOCITY },
-    "E": { speedX: VELOCITY, speedY: 0 },
-    "ES": { speedX: VELOCITY, speedY: VELOCITY },
-    "S": { speedX: 0, speedY: VELOCITY },
-    "SW": { speedX: -VELOCITY, speedY: VELOCITY },
-    "W": { speedX: -VELOCITY, speedY: 0 },
-    "NW": { speedX: -VELOCITY, speedY: -VELOCITY }
-};
-
-var KEY_CODES = {
-    G: 103,
-    Space: 32
-};
-
-var ctx;
-var canvas;
-
-var dotRadius = 5;
-var showGrid = false;
-var g = 50;
-var numOfRows = 14;
-var numOfColumns = 32;
-var gw = numOfColumns * g; // 1600
-var gh = numOfRows *g; // 700
 
 function random(min, max) {
     return Math.floor(Math.random() * (max - min)) + min;
 }
 
 function generateDots() {
-    var smart_dots = new Array(NUM_OF_DOTS).fill(null).map(function() {
+    var smart_dots = new Array(100).fill(null).map(function() {
         // return new Dot(random(30, 180), random(30, 180));
         return new Dot(100, 100);
     });
@@ -172,6 +205,7 @@ function Grid(g, numOfRows, numOfColumns) {
     this.gh = this.numOfRows * this.g;
 
     this.draw = function() {
+        var ctx = UI.getCtx();
         ctx.strokeStyle = "gray";
         ctx.lineWidth = 0.5;
 
@@ -213,11 +247,12 @@ function Dot2(dna) {
         }
 
         var currentMove = dna[step];
+        var targetReached = currentMove[3];
 
-        if (currentMove === "T") {
+        // If target is reached in this move and this is the last frame
+        if (targetReached && this.m === counter) {
             this.targetReached = true;
             this.color = "blue";
-            return;
         }
         this.vector = { vx: currentMove[0], vy: currentMove[1] };
         this.m = currentMove[2];
@@ -227,7 +262,7 @@ function Dot2(dna) {
         var vy;
 
         // If should not move in this frame
-        if (this.m === 0 || this.m < counter) {
+        if (this.m === 0 || counter > this.m) {
             vx = 0;
             vy = 0;
         } else {
@@ -240,6 +275,7 @@ function Dot2(dna) {
     }
 
     this.draw =  function drawDot() {
+        var ctx = UI.getCtx();
         if (!this.finished) {
             ctx.beginPath();
             ctx.arc(this.pos.x, this.pos.y, dotRadius, 0, 2*Math.PI);
@@ -252,43 +288,9 @@ function Dot2(dna) {
     };
 }
 
-// function Dot(startX, startY) {
-//     this.vector = new Vector2D(startX, startY);
-//     this.counter = 0;
-//     this.move =  function() {
-//         if (!this.direction) {
-//             var dirType = getRandomDirection();
-//             this.direction = directions[dirType];
-//         }
-
-//         // Change direction every 10 steps
-//         if (this.counter === 10) {
-//             this.counter = 0;
-//             var dirType = getRandomDirection();
-//             this.direction = directions[dirType];
-//         }
-
-//         var newPosX = this.vector.x + this.direction.speedX;
-//         var newPosY = this.vector.y + this.direction.speedY;
-
-//         if (!willColide(newPosX, newPosY) && !isEdge(newPosX, newPosY)) {
-//             this.vector.x = newPosX;
-//             this.vector.y = newPosY;
-//         }
-
-//         this.counter++;
-//     };
-
-//     this.draw =  function() {
-//         ctx.beginPath();
-//         ctx.arc(this.vector.x, this.vector.y, dotRadius, 0, 2*Math.PI);
-//         ctx.fillStyle = "red";
-//         ctx.fill();
-//     };
-// }
-
 
 function drawObstacles() {
+    var ctx = UI.getCtx();
     ctx.fillStyle = "white";
     obstacles.forEach(function(ob) {
         ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
@@ -296,54 +298,10 @@ function drawObstacles() {
 }
 
 function drawTarget(ob) {
+    var ctx = UI.getCtx();
     ctx.fillStyle = "#21ec8e";
     ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
 }
-
-
-// function getRandomDirection() {
-//     var rnd = Math.floor(Math.random() * Math.floor(7) + 1);
-//     return DIR_TYPES[rnd];
-// }
-
-
-// function isEdge(posX, posY) {
-//     var r = dotRadius;
-//     if (posX - r >= 0 && posX + r <= canvas.width) {
-//         if (posY - r >= 0 && posY + r <= canvas.height) {
-//             return false;
-//         }
-//     }
-
-//     return true;
-// }
-
-// function willColide(posX, posY) {
-//     var r = dotRadius;
-
-//     var colidesWith = obstacles.find(function(ob) {
-//         return (posX + r >= ob.x && posX - r <= (ob.x + ob.w)
-//             && posY + r >= ob.y && posY - r <= (ob.y + ob.h));
-//     });
-
-//     return colidesWith ? true : false;
-// }
-
-function setupListeners() {
-    window.onkeypress = function(e) {
-        var code = e.keyCode;
-        if (code === KEY_CODES.G) {
-            showGrid = !showGrid;
-        } else if (code === KEY_CODES.Space) {
-            if (Engine.running) {
-                Engine.pause();
-            } else {
-                Engine.animate();
-            }
-        }
-    }
-}
-
 
 var Engine = {
     initialized: false,
@@ -356,26 +314,59 @@ var Engine = {
 
     interval: null,
 
-    init(canvas, ctx, grid, obstacles, generation) {
+    init(grid, obstacles, generation) {
         this.initialized = true;
-
-        this.canvas = canvas;
-        this.context = ctx;
         this.grid = grid;
         this.obstacles = obstacles;
         this.generation = generation;
+
+        this.currentGenerationNo = 1;
     },
 
-    clearCanvas() {
-        if (this.context) {
-            this.context.clearRect(0, 0, gw, gh);
+    setupListeners() {
+        window.onkeypress = function(e) {
+            var code = e.keyCode;
+            if (code === KEY_CODES.G_Key) {
+                this.toggleGrid();
+            } else if(code === KEY_CODES.S_Key) {
+                if (this.running) {
+                    this.stopAnimation();
+                } else {
+                    this.currentGenerationNo = 1;
+                    this.buildCurrentGen();
+                    this.animate();
+                }
+            } else if (code === KEY_CODES.Space) {
+                this.paused = !this.paused;
+            }
+        }.bind(this);
+    },
+
+    // TODO: Move to UI class
+    toggleGrid() {
+        if (this.running && !this.paused) {
+            SETTINGS.showGrid = !SETTINGS.showGrid;
         }
     },
 
-    _onFrame() {
-        this.clearCanvas();
+    buildCurrentGen() {
+        var index = this.currentGenerationNo - 1;
+        var gen = simData[index].map(function(moves) {
+            return new Dot2(moves);
+        });
 
-        if (showGrid) { 
+        this.generation = gen;
+        UI.updateGeneration(this.currentGenerationNo);
+    },
+
+    _onFrame() {
+        if (this.paused) {
+            return;
+        }
+
+        UI.clearCanvas();
+
+        if (SETTINGS.showGrid) { 
             this.grid.draw();
         }
 
@@ -386,9 +377,10 @@ var Engine = {
         if (this.counter > 10) {
             this.counter = 1;
             this.step += 1;
+            UI.updateStep(this.step);
         }
 
-        if (this.generation.length > 0 && this.step < SETTINGS.dna_length) {
+        if (this.generation.length > 0 && this.step < SETTINGS.ga.maxSteps) {
             this.generation.forEach(function(dot) {
                 dot.move(this.step, this.counter);
                 dot.draw();
@@ -397,34 +389,41 @@ var Engine = {
             this.counter += 1;
         }
 
+        if (this.step === SETTINGS.ga.maxSteps) {
+            this.currentGenerationNo += 1;
+            if (this.currentGenerationNo === SETTINGS.ga.maxGenerations) {
+                this.stopAnimation();
+            } else {
+                this.counter = 1;
+                this.step = 0;
+                this.buildCurrentGen();
+
+            }
+        }
+
     },
 
     animate() {
         this.counter = 1;
         this.step = 0;
         this.running = true;
-        this.interval = setInterval(this._onFrame.bind(this), FRAMERATE);
+        this.interval = setInterval(this._onFrame.bind(this), SETTINGS.framerate);
     },
 
-    pause() {
-        this.running = false;
+    stopAnimation() {
         clearInterval(this.interval);
+        UI.reset();
+        this.running = false;
+        this.paused = false;
+        this.generation = [];
     }
 };
 
 window.onload = function() {
-    canvas = document.getElementById("mycanvas");
-    ctx = canvas.getContext("2d");
-    canvas.width = gw;
-    canvas.height = gh;
-
-    UI.init(canvas);
-
-    // var generation = generateDots();
+    UI.init(); 
 
     var grid = new Grid(g, numOfRows, numOfColumns, gw, gh);
 
-    Engine.init(canvas, ctx, grid, obstacles, []);
-    setupListeners();
-    Engine.animate();
+    Engine.init(grid, obstacles, []);
+    Engine.setupListeners();
 }
