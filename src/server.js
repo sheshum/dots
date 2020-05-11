@@ -8,7 +8,7 @@ const router = require("./router");
 const PORT = 5001;
 const app = express();
 
-app.use(bodyParser.urlencoded());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use("/", express.static(path.join(__dirname, "../public/")))

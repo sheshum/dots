@@ -4,7 +4,20 @@ var simData;
 
 var SETTINGS = {
     framerate: 20,
-    showGrid: false,
+    dotRadius: 5,
+    grid: {
+        showGrid: false,
+        width: 50,
+        numOfRows: 14,
+        numOfColumns: 32
+    },
+    colors: {
+        target: "#21ec8e",
+        obstacle: "white",
+        dot: "red",
+        dotOnTarget: "blue",
+        gridStroke: "gray"
+    },
     ga: {
         maxGenerations: 5,
         poolSize: 7,
@@ -21,43 +34,6 @@ var KEY_CODES = {
     S_Key: 115
 };
 
-var dotRadius = 5;
-var g = 50;
-var numOfRows = 14;
-var numOfColumns = 32;
-var gw = numOfColumns * g; // 1600
-var gh = numOfRows *g; // 700
-
-// var VELOCITY = 5;
-// var DIR_TYPES = ["N", "NE", "E", "ES", "S", "SW", "W", "NW"];
-// var directions = {
-//     "N": { speedX: 0, speedY: -VELOCITY },
-//     "NE": { speedX: VELOCITY, speedY: -VELOCITY },
-//     "E": { speedX: VELOCITY, speedY: 0 },
-//     "ES": { speedX: VELOCITY, speedY: VELOCITY },
-//     "S": { speedX: 0, speedY: VELOCITY },
-//     "SW": { speedX: -VELOCITY, speedY: VELOCITY },
-//     "W": { speedX: -VELOCITY, speedY: 0 },
-//     "NW": { speedX: -VELOCITY, speedY: -VELOCITY }
-// };
-
-var ctx;
-var canvas;
-
-
-var SETTINGS = {
-    framerate: 20,
-    showGrid: false,
-    ga: {
-        maxGenerations: 5,
-        poolSize: 100,
-        maxSteps: 20,
-        crossOverRate: 0.95,
-        mutationRate: 0.02,
-        elitismCount: 3
-    }
-};
-
 var obstacles = [
     { x: 200, y: 200, w: 50, h: 300 },
     { x: 400, y: 0, w: 100, h: 250 },
@@ -66,85 +42,6 @@ var obstacles = [
 ];
 
 var target = { x: 1550, y: 150, w: 50, h: 100 };
-
-
-var obstacles = [
-    { x: 200, y: 200, w: 50, h: 300 },
-    { x: 400, y: 0, w: 100, h: 250 },
-    { x: 600, y: 450 , w: 150, h: 200 },
-    { x: 1000, y: 300, w: 400, h: 150 }
-];
-
-var target = { x: 1550, y: 150, w: 50, h: 100 };
-
-var UI = {
-    loader: null,
-    btnGenerateData: null,
-    btnRunSimulation: null,
-    numOfGenerationsEl: null,
-    numOfStepsEl: null,
-    init() {
-        var canvas = document.getElementById("mycanvas");
-        var ctx = canvas.getContext("2d");
-        canvas.width = gw;
-        canvas.height = gh;
-
-        this.canvas = canvas;
-        this.context = ctx;
-
-        this.loader = document.getElementsByClassName("loader")[0];
-        this.numOfGenerationsEl = document.getElementById("ga-no-generations");
-        this.numOfStepsEl = document.getElementById("ga-no-steps");
-        this.btnGenerateData = document.getElementById("ga-btn-generate");
-        this.btnRunSimulation = document.getElementById("ga-btn-run");
-
-        // var left = canvas.width - 300;
-        // this.ga_counter.style.left = left + "px";
-        this.btnRunSimulation.setAttribute("disabled", true);
-
-        this.updateGeneration("__");
-        this.updateStep("__");
-    },
-
-    getCtx() {
-        return this.context;
-    },
-
-    reset() {
-        this.resetCounter();
-        this.clearCanvas();
-        this.btnGenerateData.removeAttribute("disabled");
-    },
-
-    clearCanvas() {
-        if (this.context) {
-            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-    },
-
-    resetCounter() {
-        this.updateStep("__");
-        this.updateGeneration("__");
-    },
-
-    updateGeneration(generation) {
-        this.numOfGenerationsEl.innerHTML = `Generation: ${generation} / ${SETTINGS.ga.maxGenerations}`;
-    },
-
-    updateStep(step) {
-        this.numOfStepsEl.innerHTML = `Step: ${step} / ${SETTINGS.ga.maxSteps}`;
-    },
-
-    showLoader(show) {
-        if (this.loader) {
-            if (show) {
-                this.loader.classList.remove("hidden");
-            } else {
-                this.loader.classList.add("hidden");
-            }
-        }
-    }
-}
 
 var api = {
     sendGenerateData() {
@@ -185,6 +82,101 @@ var api = {
     }
 }
 
+
+var UI = {
+    loader: null,
+    btnGenerateData: null,
+    btnRunSimulation: null,
+    numOfGenerationsEl: null,
+    numOfStepsEl: null,
+    init(grid) {
+        this.grid = grid;
+
+        var canvas = document.getElementById("mycanvas");
+        var ctx = canvas.getContext("2d");
+        canvas.width = grid.gw;
+        canvas.height = grid.gh;
+
+        this.canvas = canvas;
+        this.context = ctx;
+
+        this.loader = document.getElementsByClassName("loader")[0];
+        this.numOfGenerationsEl = document.getElementById("ga-no-generations");
+        this.numOfStepsEl = document.getElementById("ga-no-steps");
+        this.btnGenerateData = document.getElementById("ga-btn-generate");
+        this.btnRunSimulation = document.getElementById("ga-btn-run");
+
+        // var left = canvas.width - 300;
+        // this.ga_counter.style.left = left + "px";
+        this.btnRunSimulation.setAttribute("disabled", true);
+
+        this.updateGeneration("__");
+        this.updateStep("__");
+    },
+
+    getCtx() {
+        return this.context;
+    },
+
+    reset() {
+        this.resetCounter();
+        this.clearCanvas();
+        this.btnGenerateData.removeAttribute("disabled");
+    },
+
+    clearCanvas() {
+        if (this.context) {
+            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+    },
+
+    drawGrid() {
+        var ctx = this.getCtx();
+        this.grid.draw(ctx);
+    },
+
+    fillRecangle(x, y, w, h, color) {
+        var ctx = this.getCtx();
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, w, h);
+    },
+
+    fillCircle(x, y, radius, color) {
+        var ctx = this.getCtx();
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2*Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+    },
+
+    toggleGrid() {
+        this.grid.toggle();
+    },
+
+    resetCounter() {
+        this.updateStep("__");
+        this.updateGeneration("__");
+    },
+
+    updateGeneration(generation) {
+        this.numOfGenerationsEl.innerHTML = `Generation: ${generation} / ${SETTINGS.ga.maxGenerations}`;
+    },
+
+    updateStep(step) {
+        this.numOfStepsEl.innerHTML = `Step: ${step} / ${SETTINGS.ga.maxSteps}`;
+    },
+
+    showLoader(show) {
+        if (this.loader) {
+            if (show) {
+                this.loader.classList.remove("hidden");
+            } else {
+                this.loader.classList.add("hidden");
+            }
+        }
+    }
+}
+
 function generateData() {
     UI.showLoader(true);
     UI.btnGenerateData.setAttribute("disabled", true);
@@ -222,32 +214,37 @@ function generateDots() {
     return smart_dots;
 }
 
-function Grid(g, numOfRows, numOfColumns) {
+function Grid(g, numOfRows, numOfColumns, showGrid) {
     this.g = g;
     this.numOfRows = numOfRows;
     this.numOfColumns = numOfColumns;
     this.gw = this.numOfColumns * this.g;
     this.gh = this.numOfRows * this.g;
+    this.show = showGrid;
 
-    this.draw = function() {
-        var ctx = UI.getCtx();
-        ctx.strokeStyle = "gray";
-        ctx.lineWidth = 0.5;
+    this.toggle = function() {
+        this.show = !this.show;
+    },
+    this.draw = function(ctx) {
+        if (this.show) {
+            ctx.strokeStyle = SETTINGS.colors.gridStroke;
+            ctx.lineWidth = 0.5;
 
-        // Horizontal lines
-        for (var i = 0; i < this.numOfRows; i++) {
-            ctx.beginPath();
-            ctx.moveTo(0, this.g * i);
-            ctx.lineTo(this.gw, this.g * i);
-            ctx.stroke();
-        }
+            // Horizontal lines
+            for (var i = 0; i < this.numOfRows; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, this.g * i);
+                ctx.lineTo(this.gw, this.g * i);
+                ctx.stroke();
+            }
 
-        // Vertical lines
-        for (var j = 1; j < this.numOfColumns; j++) {
-            ctx.beginPath();
-            ctx.moveTo(this.g * j, 0);
-            ctx.lineTo(this.g * j, this.gh);
-            ctx.stroke();
+            // Vertical lines
+            for (var j = 1; j < this.numOfColumns; j++) {
+                ctx.beginPath();
+                ctx.moveTo(this.g * j, 0);
+                ctx.lineTo(this.g * j, this.gh);
+                ctx.stroke();
+            }
         }
     }
 }
@@ -257,14 +254,15 @@ function Vector2D(x, y) {
     this.y = y;
 }
 
-function Dot2(dna) {
+function Dot2D(dna) {
     this.dna = dna;
     this.pos = new Vector2D(100, 100);
     this.totalSteps = -1;
     this.step = 0;
     this.counter = 0;
     this.finished = false;
-    this.color = "red";
+    this.color = SETTINGS.colors.dot;
+    this.radius = SETTINGS.dotRadius;
     this.move = function(step, counter) {
 
         if (this.finished === true) {
@@ -277,7 +275,7 @@ function Dot2(dna) {
         // If target is reached in this move and this is the last frame
         if (targetReached && this.m === counter) {
             this.targetReached = true;
-            this.color = "blue";
+            this.color = SETTINGS.colors.dotOnTarget;
         }
         this.vector = { vx: currentMove[0], vy: currentMove[1] };
         this.m = currentMove[2];
@@ -300,12 +298,8 @@ function Dot2(dna) {
     }
 
     this.draw =  function drawDot() {
-        var ctx = UI.getCtx();
         if (!this.finished) {
-            ctx.beginPath();
-            ctx.arc(this.pos.x, this.pos.y, dotRadius, 0, 2*Math.PI);
-            ctx.fillStyle = this.color;
-            ctx.fill();
+            UI.fillCircle(this.pos.x, this.pos.y, this.radius, this.color);
         }
         if (this.targetReached) {
             this.finished = true;
@@ -313,19 +307,16 @@ function Dot2(dna) {
     };
 }
 
+function RectComponent(x, y, w, h, color) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.color = color;
 
-function drawObstacles() {
-    var ctx = UI.getCtx();
-    ctx.fillStyle = "white";
-    obstacles.forEach(function(ob) {
-        ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
-    });
-}
-
-function drawTarget(ob) {
-    var ctx = UI.getCtx();
-    ctx.fillStyle = "#21ec8e";
-    ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+    this.draw = function() {
+        UI.fillRecangle(this.x, this.y, this.w, this.h, this.color);
+    }
 }
 
 var Engine = {
@@ -339,45 +330,42 @@ var Engine = {
 
     interval: null,
 
-    init(grid, obstacles, generation) {
+    init(obstacles, target, generation) {
         this.initialized = true;
-        this.grid = grid;
+        this.target = target;
         this.obstacles = obstacles;
-        this.generation = generation;
+        this.generation = generation || [];
 
         this.currentGenerationNo = 1;
     },
 
     setupListeners() {
-        window.onkeypress = function(e) {
-            var code = e.keyCode;
-            if (code === KEY_CODES.G_Key) {
-                this.toggleGrid();
-            } else if(code === KEY_CODES.S_Key) {
-                if (this.running) {
-                    this.stopAnimation();
-                } else {
-                    this.currentGenerationNo = 1;
-                    this.buildCurrentGen();
-                    this.animate();
-                }
-            } else if (code === KEY_CODES.Space) {
-                this.paused = !this.paused;
-            }
-        }.bind(this);
+        window.onkeypress = this._onKeyPress.bind(this);
     },
 
-    // TODO: Move to UI class
-    toggleGrid() {
-        if (this.running && !this.paused) {
-            SETTINGS.showGrid = !SETTINGS.showGrid;
+    _onKeyPress(e) {
+        var code = e.keyCode;
+        if (code === KEY_CODES.G_Key) {
+            if (this.running && !this.paused) {
+                UI.toggleGrid();
+            }
+        } else if(code === KEY_CODES.S_Key) {
+            if (this.running) {
+                this.stopAnimation();
+            } else {
+                this.currentGenerationNo = 1;
+                this.buildCurrentGen();
+                this.animate();
+            }
+        } else if (code === KEY_CODES.Space) {
+            this.paused = !this.paused;
         }
     },
 
     buildCurrentGen() {
         var index = this.currentGenerationNo - 1;
         var gen = simData[index].map(function(moves) {
-            return new Dot2(moves);
+            return new Dot2D(moves);
         });
 
         this.generation = gen;
@@ -390,13 +378,12 @@ var Engine = {
         }
 
         UI.clearCanvas();
+        UI.drawGrid();
 
-        if (SETTINGS.showGrid) { 
-            this.grid.draw();
-        }
-
-        drawTarget(target);
-        drawObstacles();
+        this.target.draw();
+        this.obstacles.forEach(function(ob) {
+            ob.draw();
+        });
 
         // Every 10 frames select new move
         if (this.counter > 10) {
@@ -445,10 +432,18 @@ var Engine = {
 };
 
 window.onload = function() {
-    UI.init(); 
+    var grid = new Grid(
+        SETTINGS.grid.width,
+        SETTINGS.grid.numOfRows,
+        SETTINGS.grid.numOfColumns,
+        SETTINGS.grid.showGrid
+    );
+    UI.init(grid); 
 
-    var grid = new Grid(g, numOfRows, numOfColumns, gw, gh);
-
-    Engine.init(grid, obstacles, []);
+    var t = new RectComponent(target.x, target.y, target.w, target.h, this.SETTINGS.colors.target);
+    var obArr = obstacles.map(function(ob) {
+        return new RectComponent(ob.x, ob.y, ob.w, ob.h, SETTINGS.colors.obstacle);
+    });
+    Engine.init(obArr, t);
     Engine.setupListeners();
 }
