@@ -18,7 +18,20 @@ const ELITISM_COUNT = 3;
 
 // const target = { x: 1550, y: 150, w: 50, h: 100 };
 
-async function startGA(params) {
+
+function _packPopulationData(population) {
+    const matingPool = population.getIndividuals();
+
+    const populationData = [];
+    matingPool.forEach(individual => {
+        const moves = individual.getMoves();
+        populationData.push(moves);
+    });
+
+    return populationData;
+}
+
+async function runGeneticAlgorithm(params) {
     console.log("Starting...");
 
     const obstacles = params.obstacles;
@@ -32,6 +45,8 @@ async function startGA(params) {
 
     dataHandler.clearData();
 
+    const allData = [];
+
     let generation = 1;
     const ga = new GA(poolSize, crossOverRate, mutationRate, elitismCount);
 
@@ -39,7 +54,9 @@ async function startGA(params) {
     ga.evaluate( population, obstacles, target );
     
     do {
-        dataHandler.savePopulationData(population, generation);
+
+        const populationData = _packPopulationData(population);
+        allData.push(populationData);
 
         const charlieSheen = population.getFittest(0);
         console.log(`Generation: ${generation} \t||\t Best solution: ${charlieSheen.getFitness()} \t||\t Average: ${population.getAverageFitness()}`);
@@ -55,7 +72,9 @@ async function startGA(params) {
     // const charlieSheen = population.getFittest(0);
     // console.log(`Generation: ${generation} \t||\t Best solution: ${charlieSheen.getFitness()} \t||\t Average: ${population.getAverageFitness()}`);
 
-    return population;
+    console.log("GA finished, storing data to file...");
+    dataHandler.saveSerializedData(allData);
+    return { success: true };
 }
 
-module.exports = { startGA };
+module.exports = { runGeneticAlgorithm };

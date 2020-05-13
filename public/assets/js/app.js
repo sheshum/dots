@@ -1,8 +1,6 @@
 
-var HOST = "http://localhost:5001";
-var simData;
-
 var SETTINGS = {
+    host: "http://localhost:5001",
     framerate: 20,
     dotRadius: 5,
     grid: {
@@ -21,7 +19,7 @@ var SETTINGS = {
     ga: {
         maxGenerations: 5,
         poolSize: 7,
-        maxSteps: 150,
+        maxSteps: 10,
         crossOverRate: 0.95,
         mutationRate: 0.02,
         elitismCount: 3
@@ -55,7 +53,7 @@ var api = {
             mutationRate: SETTINGS.ga.mutationRate,
             elitismCount: SETTINGS.ga.elitismCount
         };
-        return fetch(`${HOST}/api/ga/generate`, {
+        return fetch(`${SETTINGS.host}/api/ga/generate`, {
             method: "post",
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -64,12 +62,12 @@ var api = {
         }).then(function(data) {
             return data;
         }).catch(function(err) {
-            console.log("Error: ", err);
+            console.log("sendGenerateData :: Error: ", err);
         });
     },
 
     getAllResults() {
-        return fetch(`${HOST}/api/ga/results`)
+        return fetch(`${SETTINGS.host}/api/ga/results`)
             .then(function(response) {
                 return response.json();
             })
@@ -77,7 +75,20 @@ var api = {
                 return data;
             })
             .catch(function(err) {
-                console.log("Error: ", err);
+                console.log("getAllResults :: Error: ", err);
+            });
+    },
+
+    getGenerationData(index) {
+        return fetch(`${SETTINGS.host}/api/ga/results/${index}`)
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                return data;
+            })
+            .catch(function(err) {
+                console.log("getPopulationData :: Error: ", err);
             });
     }
 }
@@ -180,7 +191,8 @@ var UI = {
 function generateData() {
     UI.showLoader(true);
     UI.btnGenerateData.setAttribute("disabled", true);
-    api.sendGenerateData().then(function(_data) {
+
+    api.sendGenerateData().then(function() {
         UI.btnRunSimulation.removeAttribute("disabled");
         UI.showLoader(false);
     });
@@ -188,30 +200,28 @@ function generateData() {
 
 function startSimulation() {
     UI.showLoader(true);
-    return api.getAllResults().then(function(data) {
+   
+    return api.getGenerationData(0).then(function(rsp) {
         UI.showLoader(false);
 
-        simData = data;
+        var generationData = rsp.data;
+        UI.btnRunSimulation.setAttribute("disabled", true);
+        Engine.buildCurrentGen(generationData);
+        UI.updateGeneration(Engine.currentGenerationNo);
+        Engine.animate();
+    });
+}
+
+function getGeneration(index) {
+    UI.showLoader(true);
+    return api.getGenerationData(index).then(function(rsp) {
+        UI.showLoader(false);
+
+        var generationData = rsp.data;
 
         UI.btnRunSimulation.setAttribute("disabled", true);
-        Engine.buildCurrentGen();
-        Engine.animate();
-    }).catch(function(err) {
-        console.log(err);
+        return generationData;
     });
-}
-
-function random(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-
-function generateDots() {
-    var smart_dots = new Array(100).fill(null).map(function() {
-        // return new Dot(random(30, 180), random(30, 180));
-        return new Dot(100, 100);
-    });
-
-    return smart_dots;
 }
 
 function Grid(g, numOfRows, numOfColumns, showGrid) {
@@ -277,7 +287,7 @@ function Dot2D(dna) {
             this.targetReached = true;
             this.color = SETTINGS.colors.dotOnTarget;
         }
-        this.vector = { vx: currentMove[0], vy: currentMove[1] };
+        this.vector = new Vector2D(currentMove[0], currentMove[1]);
         this.m = currentMove[2];
 
 
@@ -289,8 +299,8 @@ function Dot2D(dna) {
             vx = 0;
             vy = 0;
         } else {
-            vx = this.vector.vx * 5;
-            vy = this.vector.vy * 5;
+            vx = this.vector.x * 5;
+            vy = this.vector.y * 5;
         }
     
         this.pos.x += vx;
@@ -330,12 +340,13 @@ var Engine = {
 
     interval: null,
 
-    init(obstacles, target, generation) {
+    init(obstacles, target, maxGenerations) {
         this.initialized = true;
         this.target = target;
         this.obstacles = obstacles;
-        this.generation = generation || [];
+        this.generation = [];
 
+        this.maxGenerations = maxGenerations;
         this.currentGenerationNo = 1;
     },
 
@@ -354,22 +365,24 @@ var Engine = {
                 this.stopAnimation();
             } else {
                 this.currentGenerationNo = 1;
-                this.buildCurrentGen();
-                this.animate();
+                getGeneration(this.currentGenerationNo - 1).then(function(gen) {
+                    this.buildCurrentGen(gen);
+                    UI.updateGeneration(this.currentGenerationNo);
+                    this.animate();
+                }.bind(this));
             }
         } else if (code === KEY_CODES.Space) {
             this.paused = !this.paused;
         }
     },
 
-    buildCurrentGen() {
-        var index = this.currentGenerationNo - 1;
-        var gen = simData[index].map(function(moves) {
+    buildCurrentGen(genData) {
+        var gen = genData.map(function(moves) {
             return new Dot2D(moves);
         });
 
         this.generation = gen;
-        UI.updateGeneration(this.currentGenerationNo);
+        // UI.updateGeneration(this.currentGenerationNo);
     },
 
     _onFrame() {
@@ -403,16 +416,17 @@ var Engine = {
 
         if (this.step === SETTINGS.ga.maxSteps) {
             this.currentGenerationNo += 1;
-            if (this.currentGenerationNo === SETTINGS.ga.maxGenerations) {
+            if (this.currentGenerationNo > this.maxGenerations) {
                 this.stopAnimation();
             } else {
                 this.counter = 1;
                 this.step = 0;
-                this.buildCurrentGen();
-
+                getGeneration(this.currentGenerationNo - 1).then(function(gen) {
+                    this.buildCurrentGen(gen);
+                    UI.updateGeneration(this.currentGenerationNo);
+                }.bind(this));
             }
         }
-
     },
 
     animate() {
@@ -427,7 +441,7 @@ var Engine = {
         UI.reset();
         this.running = false;
         this.paused = false;
-        this.generation = [];
+        // this.generation = [];
     }
 };
 
@@ -444,6 +458,6 @@ window.onload = function() {
     var obArr = obstacles.map(function(ob) {
         return new RectComponent(ob.x, ob.y, ob.w, ob.h, SETTINGS.colors.obstacle);
     });
-    Engine.init(obArr, t);
+    Engine.init(obArr, t, this.SETTINGS.ga.maxGenerations);
     Engine.setupListeners();
 }

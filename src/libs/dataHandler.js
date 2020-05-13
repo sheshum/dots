@@ -1,47 +1,27 @@
 const fs = require("fs");
 const path = require("path");
+const BSON = require("bson");
 
-const filepath = path.join(__dirname, "../../data", "data.json");
-function _saveData(generation, firstGen = false) {
-    if (firstGen) {
-        const data = [generation];
-        fs.writeFileSync(filepath, JSON.stringify(data));
-        return;
-    }
-
-    const buff = fs.readFileSync(filepath);
-    const data = JSON.parse(buff);
-    data.push(generation);
-
-    fs.writeFileSync(filepath, JSON.stringify(data));
-}
+const filepathBSON = path.join(__dirname, "../../data", "data.bson");
 
 function clearData() {
-    if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath);
-        console.log(`File: ${filepath} removed.`);
+    if (fs.existsSync(filepathBSON)) {
+        fs.unlinkSync(filepathBSON);
+        console.log(`File: ${filepathBSON} removed.`);
     }
     return;
 }
 
-function savePopulationData(population, generation) {
-    const firstGen = (generation === 1);
-
-    const matingPool = population.getIndividuals();
-
-    const populationData = [];
-    matingPool.forEach(dot => {
-        const moves = dot.getMoves();
-        populationData.push(moves);
-    });
-
-    _saveData(populationData, firstGen);
+function saveSerializedData(data) {
+    const dataSerialized = BSON.serialize(data);
+    fs.writeFileSync(filepathBSON, dataSerialized);
+    return;
 }
 
-async function getResults() {
-    const buff = fs.readFileSync(filepath);
-    const data = JSON.parse(buff);
-    return data;
+async function getPopulationData(populationIndex) {
+    const buff = fs.readFileSync(filepathBSON);
+    const data = BSON.deserialize(buff);
+    return { data: data[populationIndex], total: data.length };
 }
 
-module.exports = { savePopulationData, clearData, getResults };
+module.exports = { clearData, getPopulationData, saveSerializedData };
