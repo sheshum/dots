@@ -36,10 +36,11 @@ class ObstacleCourse {
         const diffX = Math.abs(centerX - position.x);
         const diffY = Math.abs(centerY - position.y);
 
-        
-        return (diffX <= halfWidth && diffY <= halfHeight);
         // return (posX >= t.x && posX <= (t.x + t.w)
         //     && posY >= t.y && posY <= (t.y + t.h));
+
+
+        return (diffX <= halfWidth && diffY <= halfHeight);
     }
 
     getVector(move) {
