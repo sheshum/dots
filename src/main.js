@@ -18,6 +18,7 @@ const ELITISM_COUNT = 3;
 
 // const target = { x: 1550, y: 150, w: 50, h: 100 };
 
+const separator = () => console.log("\n--------------------------------\n");
 
 function _packPopulationData(population) {
     const matingPool = population.getIndividuals();
@@ -42,6 +43,11 @@ async function runGeneticAlgorithm(params) {
     const crossOverRate = params.crossOverRate || CROSS_OVER_RATE;
     const mutationRate = params.mutationRate || MUTATION_RATE;
     const elitismCount = params.elitismCount || ELITISM_COUNT;
+
+    separator();
+    console.log("Pool size: ", poolSize);
+    console.log("DNA length: ", dnaLength);
+    separator();
 
     dataHandler.clearData();
 

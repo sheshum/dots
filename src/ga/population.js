@@ -46,6 +46,12 @@ class Population {
         return this.matingPool;
     }
 
+    logPopulationFitness() {
+        this.getFittest(0);
+        console.log("\nPopulation fitness: \n");
+        console.log(this.matingPool.map(i => i.getFitness()));
+    }
+
     getFittest(offset) {
         this.matingPool.sort((o1, o2) => {
             if(o1.getFitness() > o2.getFitness()) {

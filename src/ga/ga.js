@@ -35,6 +35,8 @@ class GA {
         population.setTotalFitness( totalFitness );
         const avg = totalFitness / population.size();
         population.setAverageFitness( parseFloat(avg.toFixed(4)) );
+
+        population.logPopulationFitness();
     }
 
     selection(population) {

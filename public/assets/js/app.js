@@ -4,7 +4,7 @@ var SETTINGS = {
     framerate: 20,
     dotRadius: 5,
     grid: {
-        showGrid: false,
+        showGrid: true,
         width: 50,
         numOfRows: 14,
         numOfColumns: 32
@@ -17,9 +17,9 @@ var SETTINGS = {
         gridStroke: "gray"
     },
     ga: {
-        maxGenerations: 5,
-        poolSize: 7,
-        maxSteps: 10,
+        maxGenerations: 10,
+        poolSize: 10,
+        maxSteps: 50,
         crossOverRate: 0.95,
         mutationRate: 0.02,
         elitismCount: 3
@@ -291,14 +291,11 @@ function Dot2D(dna) {
         this.m = currentMove[2];
 
 
-        var vx;
-        var vy;
+        var vx = 0;
+        var vy = 0;
 
         // If should not move in this frame
-        if (this.m === 0 || counter > this.m) {
-            vx = 0;
-            vy = 0;
-        } else {
+        if (this.m !== 0 && counter <= this.m) {
             vx = this.vector.x * 5;
             vy = this.vector.y * 5;
         }
@@ -458,6 +455,6 @@ window.onload = function() {
     var obArr = obstacles.map(function(ob) {
         return new RectComponent(ob.x, ob.y, ob.w, ob.h, SETTINGS.colors.obstacle);
     });
-    Engine.init(obArr, t, this.SETTINGS.ga.maxGenerations);
+    Engine.init(obArr, t, SETTINGS.ga.maxGenerations);
     Engine.setupListeners();
 }
