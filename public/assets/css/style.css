@@ -9,6 +9,34 @@ html, body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.wrapper-left {
+    float: left;
+    width: 1600px;
+}
+
+.wrapper-right {
+    float: left;
+    margin-top: 20px;
+    margin-left: 10px;
+}
+.wrapper-right form {
+    margin: 5px;
+}
+
+.wrapper-right form .form-control {
+    
+    margin-bottom: 20px;
+}
+
+.form-control input[type=number] {
+    width: 70px;
+}
+
+.form-control label {
+    color: #bcdadb;
+    font-weight: 600;
+}
+
 button:hover {
     cursor: pointer;
 }
@@ -17,7 +45,7 @@ button:hover {
     position: absolute;
     top: 10px;
     /* left: 25px; */
-    left: 1270px;
+    left: 1250px;
     z-index: 1;
     color: antiquewhite;
     font-size: 0.8em;
@@ -33,22 +61,25 @@ button:hover {
 }
 
 .controls {
+    z-index: 1;
+    position: relative;
     float: left;
-    margin-top: 10px;
-    margin-left: 150px;
+    margin-top: -50px;
+    margin-left: 100px;
 }
 
 .controls button {
     /* background-color: #282a2c;
     color: #9da7af; */
-    background-color: #bcdadb;
+    background-color: #d9f4f5;
     color: #454b4b;
     /* border: 2px solid rgb(56, 58, 58); */
     border: none;
+    margin-right: 2px;
 }
 
 .controls button i {
-    font-size: 1em;
+    font-size: 1.3em;
     padding: 10px;
 }
 
@@ -91,10 +122,6 @@ button:hover {
 canvas {
     border: 1px solid gray;
     background-color: #282a2c;
-}
-
-.wrapper-left {
-    width: 1600px;
 }
 
 .loader,

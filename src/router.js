@@ -10,15 +10,14 @@ router.get("/ga/results/:id", (req, res) => {
     const populationIndex = parseInt(req.params.id);
     getPopulationData(populationIndex).then((response) => {
         res.status(200).send(response);
-    })
-    .catch(err => {
+    }).catch((err) => {
         console.log(err);
         res.status(500).send("Internal error");
     });
 });
 
 router.post("/ga/generate", (req, res) => {
-    return runGeneticAlgorithm(req.body).then((rsp) => {
+    runGeneticAlgorithm(req.body).then((rsp) => {
         console.log("All done, returning response...");
         res.status(200).send(rsp);
     }).catch(err => {

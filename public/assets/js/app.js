@@ -1,8 +1,9 @@
 
 var SETTINGS = {
     host: "http://localhost:5001",
-    framerate: 20,
+    framerate: 10,
     dotRadius: 5,
+    showOnlyFittest: false,
     grid: {
         showGrid: true,
         width: 50,
@@ -14,12 +15,14 @@ var SETTINGS = {
         obstacle: "white",
         dot: "red",
         dotOnTarget: "blue",
+        fittest: "#21ec8e",
         gridStroke: "gray"
     },
     ga: {
-        maxGenerations: 10,
-        poolSize: 10,
-        maxSteps: 50,
+        maxGenerations: 50,
+        startFrom: 30,
+        poolSize: 100,
+        maxSteps: 60,
         crossOverRate: 0.95,
         mutationRate: 0.02,
         elitismCount: 3
@@ -28,6 +31,7 @@ var SETTINGS = {
 
 var KEY_CODES = {
     Space: 32,
+    F_Key: 102,
     G_Key: 103,
     S_Key: 115
 };
@@ -64,19 +68,6 @@ var api = {
         }).catch(function(err) {
             console.log("sendGenerateData :: Error: ", err);
         });
-    },
-
-    getAllResults() {
-        return fetch(`${SETTINGS.host}/api/ga/results`)
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(data) {
-                return data;
-            })
-            .catch(function(err) {
-                console.log("getAllResults :: Error: ", err);
-            });
     },
 
     getGenerationData(index) {
@@ -201,7 +192,8 @@ function generateData() {
 function startSimulation() {
     UI.showLoader(true);
    
-    return api.getGenerationData(0).then(function(rsp) {
+    var index = SETTINGS.ga.startFrom - 1;
+    return api.getGenerationData(index).then(function(rsp) {
         UI.showLoader(false);
 
         var generationData = rsp.data;
@@ -235,6 +227,7 @@ function Grid(g, numOfRows, numOfColumns, showGrid) {
     this.toggle = function() {
         this.show = !this.show;
     },
+
     this.draw = function(ctx) {
         if (this.show) {
             ctx.strokeStyle = SETTINGS.colors.gridStroke;
@@ -274,18 +267,27 @@ function Dot2D(dna) {
     this.color = SETTINGS.colors.dot;
     this.radius = SETTINGS.dotRadius;
     this.move = function(step, counter) {
-
-        if (this.finished === true) {
+        if (this.finished) {
+            return;
+        }
+        
+        if (this.targetReached === true) {
+            this.finished = true;
             return;
         }
 
         var currentMove = dna[step];
         var targetReached = currentMove[3];
 
-        // If target is reached in this move and this is the last frame
+        // If target is reached in this move
+        if (targetReached) {
+            this.color = SETTINGS.colors.dotOnTarget;
+            
+        }
+
+        // if this is the last frame of the move
         if (targetReached && this.m === counter) {
             this.targetReached = true;
-            this.color = SETTINGS.colors.dotOnTarget;
         }
         this.vector = new Vector2D(currentMove[0], currentMove[1]);
         this.m = currentMove[2];
@@ -304,12 +306,9 @@ function Dot2D(dna) {
         this.pos.y += vy;
     }
 
-    this.draw =  function drawDot() {
+    this.draw = function () {
         if (!this.finished) {
             UI.fillCircle(this.pos.x, this.pos.y, this.radius, this.color);
-        }
-        if (this.targetReached) {
-            this.finished = true;
         }
     };
 }
@@ -337,14 +336,14 @@ var Engine = {
 
     interval: null,
 
-    init(obstacles, target, maxGenerations) {
+    init(obstacles, target, maxGenerations, startFrom) {
         this.initialized = true;
         this.target = target;
         this.obstacles = obstacles;
         this.generation = [];
 
         this.maxGenerations = maxGenerations;
-        this.currentGenerationNo = 1;
+        this.currentGenerationNo = startFrom;
     },
 
     setupListeners() {
@@ -370,6 +369,8 @@ var Engine = {
             }
         } else if (code === KEY_CODES.Space) {
             this.paused = !this.paused;
+        } else if (code === KEY_CODES.F_Key) {
+            SETTINGS.showOnlyFittest = !SETTINGS.showOnlyFittest;
         }
     },
 
@@ -378,12 +379,15 @@ var Engine = {
             return new Dot2D(moves);
         });
 
-        this.generation = gen;
-        // UI.updateGeneration(this.currentGenerationNo);
+        // Set color for fittest individual
+        gen[0].color = SETTINGS.colors.fittest;
+
+        // Reverse so that the fittest is drawn last
+        this.generation = gen.reverse();
     },
 
     _onFrame() {
-        if (this.paused) {
+        if (this.paused || this.loading) {
             return;
         }
 
@@ -403,9 +407,16 @@ var Engine = {
         }
 
         if (this.generation.length > 0 && this.step < SETTINGS.ga.maxSteps) {
-            this.generation.forEach(function(dot) {
+            var last = this.generation.length - 1;
+            this.generation.forEach(function(dot, index) {
                 dot.move(this.step, this.counter);
-                dot.draw();
+                if (SETTINGS.showOnlyFittest) {
+                    if (index === last) {
+                        dot.draw();
+                    }
+                } else {
+                    dot.draw();
+                }
             }.bind(this));
 
             this.counter += 1;
@@ -418,9 +429,11 @@ var Engine = {
             } else {
                 this.counter = 1;
                 this.step = 0;
+                this.loading = true;
                 getGeneration(this.currentGenerationNo - 1).then(function(gen) {
                     this.buildCurrentGen(gen);
                     UI.updateGeneration(this.currentGenerationNo);
+                    this.loading = false;
                 }.bind(this));
             }
         }
@@ -455,6 +468,12 @@ window.onload = function() {
     var obArr = obstacles.map(function(ob) {
         return new RectComponent(ob.x, ob.y, ob.w, ob.h, SETTINGS.colors.obstacle);
     });
-    Engine.init(obArr, t, SETTINGS.ga.maxGenerations);
+
+    Engine.init(
+        obArr,
+        t,
+        SETTINGS.ga.maxGenerations,
+        SETTINGS.ga.startFrom
+    );
     Engine.setupListeners();
 }

@@ -30,13 +30,20 @@ class GA {
 
         matingPool.forEach((individual) => {
             totalFitness += calcFitness( individual, obstacleCourse );
+            // calcFitness( individual, obstacleCourse );
         });
 
+        // normalizeFitness( matingPool );
+        // totalFitness = calculateTotalFitness(matingPool);
+
+        const fittest = population.getFittest(0);
+        fittest.markAsFittest();
         population.setTotalFitness( totalFitness );
         const avg = totalFitness / population.size();
-        population.setAverageFitness( parseFloat(avg.toFixed(4)) );
+        // population.setAverageFitness( parseFloat(avg.toFixed(4)) );
 
         population.logPopulationFitness();
+        population.setAverageFitness( avg );
     }
 
     selection(population) {
@@ -120,10 +127,38 @@ function calcFitness(individual, obstacleCourse) {
     const moves = dot.run( obstacleCourse );
     individual.setMoves( moves );
 
-    const fitness = dot.getScore( obstacleCourse.target );
+    const fitness = dot.getScore( obstacleCourse.target, moves, individual.dnaLength() );
     individual.setFitness( fitness );
 
     return fitness;
 }
+
+function calculateTotalFitness(matingPool) {
+    const totalFitness = matingPool.reduce((initial, individual) => {
+        return initial + individual.getFitness();
+    }, 0);
+
+    return totalFitness;
+}
+
+function normalizeFitness(matingPool) {
+    const fitnessArr = matingPool.map((i) => i.getFitness());
+    fitnessArr.sort((a, b) => a > b);
+
+    const min = fitnessArr[0];
+    const max = fitnessArr[fitnessArr.length - 1];
+
+    matingPool.forEach((individual) => {
+        const fitness = individual.getFitness();
+        const normalized = normalize(min, max, fitness);
+        individual.setFitness(1 - normalized);
+    });
+}
+
+function normalize(min, max, val) {
+    return ((val - min) / (max - min));
+}
+
+
 
 module.exports = GA;

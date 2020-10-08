@@ -1,4 +1,4 @@
-const Dot = require('./individual');
+const Individual = require('./individual');
 
 
 class Population {
@@ -68,8 +68,8 @@ class Population {
 
 function randomMatingPool(poolSize, DNALength) {
     return new Array(poolSize).fill(null).map(() => {
-        const dot = new Dot(DNALength);
-        return dot;
+        const individual = new Individual(DNALength);
+        return individual;
     });
 }
 

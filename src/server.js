@@ -19,8 +19,6 @@ app.all("/*", (_req, res) => {
 });
 
 
-
-
 function onServerUp() {
     _log(`\nServer listening on http://localhost:${PORT}\n`);
 }

@@ -61,10 +61,12 @@ async function runGeneticAlgorithm(params) {
     
     do {
 
+        const charlieSheen = population.getFittest(0);
+
+        // Save data after sorting
         const populationData = _packPopulationData(population);
         allData.push(populationData);
 
-        const charlieSheen = population.getFittest(0);
         console.log(`Generation: ${generation} \t||\t Best solution: ${charlieSheen.getFitness()} \t||\t Average: ${population.getAverageFitness()}`);
 
         population = ga.selection( population );

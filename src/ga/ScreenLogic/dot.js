@@ -19,6 +19,7 @@ class Dot {
             if (this.target_reached) {
                 return;
             }
+
             const vector = obstacleCourse.getVector(gene);
             // value from 0 - 50;
             const m = obstacleCourse.getVelocityM(this.pos, vector);
@@ -36,24 +37,38 @@ class Dot {
         return moves;
     }
 
-    getScore(target) {
+    getScore(target, moves, maxMoves) {
         if (this.target_reached) {
             return 1;
         }
         
-        // const distanceFromStart = calculateDistance(target, this.start);
+        const distanceFromStart = calculateDistance(target, this.start);
         const distanceFromFinish = calculateDistance(target, this.pos);
 
-        // if (distanceFromFinish >= distanceFromStart) {
-        //     return 0;
-        // }
+        if (distanceFromFinish >= distanceFromStart) {
+            return 0;
+        }
 
-        // const score = (distanceFromStart - distanceFromFinish) / distanceFromStart;
-        // return score;
+        const distanceScore = (distanceFromStart - distanceFromFinish) / distanceFromStart;
+        const movesScore = scoreMoves(moves, maxMoves);
+        return (distanceScore + movesScore) / 2;
 
-        return 1 / distanceFromFinish;
+        // return 1 / distanceFromFinish;
+        // return distanceFromFinish;
     }
 };
+
+function scoreMoves(moves, max) {
+    let movesToTarget = 0;
+    moves.forEach((move) => {
+        if (move[3] !== true) {
+            movesToTarget += 1;
+        }
+    });
+
+    const normalized = 1 - (movesToTarget / max);
+    return normalized;
+}
 
 function calculateDistance(target, pos) {
     const a = pos.x - (target.x + target.w);

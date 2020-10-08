@@ -3,6 +3,7 @@ const { randomNum } = require("../libs/tools");
 class Individual {
     constructor(DNALength) {
         this.fitness = -1;
+        this.isFittest = false;
         if (DNALength) {
             this.dna = new Array(DNALength).fill(null).map(() => randomNum(0, 7));
         } else {
@@ -16,6 +17,10 @@ class Individual {
 
     dnaLength() {
         return this.dna.length;
+    }
+
+    markAsFittest() {
+        this.isFittest = true;
     }
 
     getGene(offset) {
