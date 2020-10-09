@@ -39,7 +39,9 @@ class Dot {
 
     getScore(target, moves, maxMoves) {
         if (this.target_reached) {
-            return 1;
+            const distanceScore = 1;
+            const movesScore = scoreMoves(moves, maxMoves);
+            return (distanceScore + movesScore) / 2;
         }
         
         const distanceFromStart = calculateDistance(target, this.start);
